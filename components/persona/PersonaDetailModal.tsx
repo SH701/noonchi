@@ -1,0 +1,306 @@
+
+
+import { useEffect, useState } from "react";
+import { View, Text, TouchableOpacity, Image, StyleSheet, Alert } from 'react-native';
+import Modal from "@/components/persona/modal";
+import { useAuth } from "@/lib/UserContext";
+
+type PersonaDetail = {
+  id: number | string;
+  name: string;
+  gender?: string;
+  age?: number;
+  role?: string; // Boss 등
+  description?: string; // Situation 등
+  profileImageUrl?: string;
+};
+
+const normalizeSrc = (src?: string) =>
+  !src ? "" : src.startsWith("http") || src.startsWith("/") ? src : `/${src}`;
+
+export default function PersonaDetailModal({
+  open,
+  onClose,
+  personaId,
+  onDeleted,
+}: {
+  open: boolean;
+  onClose: () => void;
+  personaId: number | string | null;
+  onDeleted: (id: number | string) => void;
+}) {
+  const { accessToken } = useAuth();
+  const [data, setData] = useState<PersonaDetail | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  // 삭제 핸들러
+  const handleDelete = async () => {
+    if (!personaId || !accessToken) return;
+    
+    Alert.alert(
+      "Delete AI",
+      "Delete This AI?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            setDeleting(true);
+            try {
+              const res = await fetch(`/api/personas/${personaId}`, {
+                method: "DELETE",
+                headers: { Authorization: `Bearer ${accessToken}` },
+                cache: "no-store",
+              });
+              if (!res.ok) {
+                return;
+              }
+              onDeleted?.(personaId);
+              onClose();
+            } catch (e) {
+              onDeleted?.(personaId);
+              onClose?.();
+            } finally {
+              setDeleting(false);
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  // 상세 조회 API: GET /api/personas/{personaId}
+  useEffect(() => {
+    if (!open || !personaId || !accessToken) return;
+    const run = async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`/api/personas/${personaId}`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          cache: "no-store",
+        });
+        const json = await res.json();
+        console.log("persona json:", json);
+        setData({
+          id: json.id ?? personaId,
+          name: json.name ?? "Unknown",
+          gender: json.gender,
+          age: json.age,
+          role: json.role ?? json.aiRole,
+          description: json.description,
+          profileImageUrl: json.profileImageUrl,
+        });
+      } catch {
+        setData(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    run();
+  }, [open, personaId, accessToken]);
+
+  // 새로운 채팅
+  const handleStartChat = async () => {
+    if (!accessToken || !data) return;
+    try {
+      const res = await fetch(`/api/conversations`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          personaId: data.id,
+          situation: data.description, // sitdata에서 상황을 전달
+        }),
+      });
+
+      if (!res.ok) throw new Error("Failed to create conversation");
+      const json = await res.json();
+
+      const conversationId =
+        json.conversationId ?? json.id ?? json.conversation?.id;
+
+      if (!conversationId) throw new Error("No conversationId in response");
+
+      // In React Native, navigation would be handled differently
+      console.log("Navigate to chatroom:", conversationId);
+    } catch (err) {
+      console.error("StartChat error:", err);
+    }
+  };
+
+  return (
+    <Modal open={open} onClose={onClose}>
+      {/* 헤더 */}
+      <View style={styles.header}>
+        {data?.profileImageUrl ? (
+          <Image
+            source={{ uri: normalizeSrc(data.profileImageUrl) }}
+            style={styles.profileImage}
+            resizeMode="cover"
+          />
+        ) : (
+          <View style={styles.profilePlaceholder} />
+        )}
+        <View style={styles.headerInfo}>
+          <Text style={styles.name} numberOfLines={1}>
+            {data?.name ?? "..."}
+          </Text>
+          <Text style={styles.role} numberOfLines={1}>
+            {data?.role ?? "..."}
+          </Text>
+        </View>
+        <TouchableOpacity
+          style={styles.closeButton}
+          onPress={onClose}
+        >
+          <Text style={styles.closeButtonText}>Close</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* 바디 */}
+      <View style={styles.body}>
+        {loading ? (
+          <Text style={styles.loadingText}>Loading...</Text>
+        ) : (
+          <View style={styles.detailsGrid}>
+            <Text style={styles.detailLabel}>Name</Text>
+            <Text style={styles.detailValue}>{data?.name ?? "-"}</Text>
+
+            <Text style={styles.detailLabel}>Gender</Text>
+            <Text style={styles.detailValue}>{data?.gender ?? "-"}</Text>
+
+            <Text style={styles.detailLabel}>Age</Text>
+            <Text style={styles.detailValue}>{data?.age ?? "-"}</Text>
+
+            <Text style={styles.detailLabel}>AI`s role</Text>
+            <Text style={styles.detailValue}>{data?.role ?? "-"}</Text>
+          </View>
+        )}
+      </View>
+
+      {/* 푸터 */}
+      <View style={styles.footer}>
+        <TouchableOpacity
+          onPress={handleStartChat}
+          style={styles.startChatButton}
+        >
+          <Text style={styles.startChatButtonText}>
+            Start New chatting
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={handleDelete}
+          style={styles.deleteButton}
+        >
+          <Text style={styles.deleteButtonText}>Delete</Text>
+        </TouchableOpacity>
+      </View>
+    </Modal>
+  );
+}
+
+const styles = StyleSheet.create({
+  header: {
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  profileImage: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#e5e7eb',
+  },
+  profilePlaceholder: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#e5e7eb',
+  },
+  headerInfo: {
+    minWidth: 0,
+    flex: 1,
+  },
+  name: {
+    fontWeight: '600',
+    fontSize: 18,
+  },
+  role: {
+    fontWeight: '600',
+    color: '#6b7280',
+    fontSize: 14,
+  },
+  closeButton: {
+    marginLeft: 'auto',
+    fontSize: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 20,
+    backgroundColor: '#f3f4f6',
+  },
+  closeButtonText: {
+    fontSize: 14,
+    color: '#374151',
+  },
+  body: {
+    padding: 20,
+    gap: 12,
+  },
+  loadingText: {
+    fontSize: 14,
+    color: '#6b7280',
+  },
+  detailsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  detailLabel: {
+    width: '50%',
+    fontSize: 14,
+    color: '#6b7280',
+  },
+  detailValue: {
+    width: '50%',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  footer: {
+    padding: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#e5e7eb',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  startChatButton: {
+    flex: 1,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: '#2563eb',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  startChatButtonText: {
+    color: 'white',
+    fontWeight: '500',
+  },
+  deleteButton: {
+    height: 44,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    backgroundColor: '#f3f4f6',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  deleteButtonText: {
+    color: '#374151',
+  },
+});
