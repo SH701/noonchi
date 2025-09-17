@@ -43,29 +43,29 @@ export default function SignupStep2() {
 
     loadData();
   }, []);
-
-  const parseJsonSafe = async (res: Response) => {
-    const ct = res.headers.get("content-type") || "";
-    return ct.includes("application/json") ? res.json() : {};
-  };
-
   const handleSignup = async () => {
-    if (!canSubmit) return;
+    if (!canSubmit) {
+      return;
+    }
+
     setError(null);
+    console.log("API 호출 시작");
+
     try {
-      const res = await fetch("/api/auth/signup", {
+      const requestBody = {
+        email,
+        password,
+        nickname: name,
+        gender,
+        birthDate,
+      };
+      const res = await fetch("https://noonchi.ai.kr/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          password,
-          nickname: name,
-          gender,
-          birthDate,
-        }),
+        body: JSON.stringify(requestBody),
       });
+      const data = await res.json().catch(() => null);
 
-      const data = await parseJsonSafe(res);
       if (!res.ok) {
         setError(data?.message || "Signup failed");
         return;
@@ -73,24 +73,22 @@ export default function SignupStep2() {
 
       const token = data?.accessToken;
       if (!token) {
+        console.log("토큰이 없음");
         setError("토큰이 없습니다. 관리자에게 문의하세요.");
         return;
       }
 
+      await AsyncStorage.setItem("accessToken", token);
       setAccessToken(token);
-      localStorage.setItem("accessToken", token);
 
-      // ✅ 로딩 표시 후 1.5초 뒤 이동
       setLoading(true);
-      setTimeout(() => {
-        router.push("/after");
-      }, 1500);
-    } catch {
+
+      router.push("/after");
+    } catch (error) {
       setError("Something went wrong");
     }
   };
 
-  // ✅ 로딩 중일 때 화면
   if (loading) {
     return <Loading />;
   }
@@ -175,7 +173,10 @@ export default function SignupStep2() {
             styles.submitButton,
             canSubmit ? styles.enabledButton : styles.disabledButton,
           ]}
-          onPress={handleSignup}
+          onPress={() => {
+            console.log("버튼 클릭됨");
+            handleSignup();
+          }}
           disabled={!canSubmit}
         >
           <Text

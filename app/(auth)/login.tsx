@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import LogoLogin from "../../assets/etc/logo_login.svg";
 
 export default function LoginPage() {
   const { setAccessToken } = useAuth();
@@ -20,7 +21,7 @@ export default function LoginPage() {
   const handleLogin = async () => {
     setError("");
     try {
-      const res = await fetch("/api/auth/login", {
+      const res = await fetch("https://noonchi.ai.kr/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -32,7 +33,7 @@ export default function LoginPage() {
       }
       setAccessToken(data.accessToken);
 
-      const meRes = await fetch("/api/users/me", {
+      const meRes = await fetch("https://noonchi.ai.kr/api/users/me", {
         headers: { Authorization: `Bearer ${data.accessToken}` },
       });
       const me = await meRes.json();
@@ -42,13 +43,11 @@ export default function LoginPage() {
         me.koreanLevel === "null" ||
         me.koreanLevel === undefined
       ) {
-        // Navigate to after page
-        console.log("Navigate to after page");
+        router.push("/after");
       } else {
         setLoading(true);
         setTimeout(() => {
-          // Navigate to main page
-          console.log("Navigate to main page");
+          router.push("/main");
         }, 1500);
       }
     } catch (err) {
@@ -69,11 +68,7 @@ export default function LoginPage() {
     <View style={styles.container}>
       {/* 상단 로고 */}
       <View style={styles.logoContainer}>
-        <Image
-          source={require("../../assets/etc/logo_login.svg")}
-          style={styles.logo}
-          resizeMode="contain"
-        />
+        <LogoLogin width={200} height={42} />
       </View>
 
       {/* 로그인 폼 */}
@@ -109,7 +104,27 @@ export default function LoginPage() {
           <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
             <Text style={styles.loginButtonText}>Sign in</Text>
           </TouchableOpacity>
-
+          <View style={styles.dividerContainer}>
+            <View style={styles.line} />
+            <Text style={styles.dividerText}>or</Text>
+            <View style={styles.line} />
+          </View>
+          <View>
+            <TouchableOpacity style={styles.kakaoButton}>
+              <Image
+                source={require("../../assets/images/kakao.png")}
+                style={styles.icon}
+              />
+              <Text>Continue With Kakao</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.googleButton}>
+              <Image
+                source={require("../../assets/images/google.png")}
+                style={styles.icon}
+              />
+              <Text>Continue With Google</Text>
+            </TouchableOpacity>
+          </View>
           <View style={styles.signupContainer}>
             <Text style={styles.signupText}>First time here? </Text>
             <TouchableOpacity onPress={() => router.push("/(auth)/signup")}>
@@ -127,6 +142,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "white",
     paddingHorizontal: 16,
+    paddingTop: 32,
   },
   loadingContainer: {
     flex: 1,
@@ -180,10 +196,49 @@ const styles = StyleSheet.create({
   loginButton: {
     width: "100%",
     paddingVertical: 12,
+    height: 52,
+    justifyContent: "center",
+    alignContent: "center",
     backgroundColor: "#2563eb",
     borderRadius: 8,
     alignItems: "center",
+  },
+  kakaoButton: {
+    width: "100%",
+    paddingVertical: 12,
+    height: 52,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignContent: "center",
+    backgroundColor: "#FEE502",
+    borderRadius: 8,
+    alignItems: "center",
     marginBottom: 16,
+    fontSize: 14,
+    position: "relative",
+  },
+  googleButton: {
+    width: "100%",
+    paddingVertical: 12,
+    height: 52,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignContent: "center",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#F3F4F6",
+    alignItems: "center",
+    marginBottom: 32,
+    fontSize: 14,
+    position: "relative",
+  },
+  icon: {
+    position: "absolute",
+    left: 32,
+    width: 18,
+    height: 18,
+    resizeMode: "contain",
   },
   loginButtonText: {
     color: "white",
@@ -194,6 +249,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
+    marginTop: 60,
   },
   signupText: {
     fontSize: 14,
@@ -203,5 +259,23 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "500",
     color: "#3b82f6",
+  },
+  dividerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 24,
+  },
+
+  line: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "#E5E7EB",
+  },
+
+  dividerText: {
+    marginHorizontal: 12,
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#1F2937",
   },
 });

@@ -66,11 +66,15 @@ export default function ProfileChange() {
   };
 
   useEffect(() => {
-    if (profileImageUrl && !profileImageUrl.startsWith("http")) {
+    if (
+      profileImageUrl &&
+      typeof profileImageUrl === "string" &&
+      !profileImageUrl.startsWith("http")
+    ) {
       const idx = FACES.findIndex((p) => p === profileImageUrl);
       setSelectedFace(idx !== -1 ? idx : null);
     } else {
-      setSelectedFace(null); // 외부 URL(업로드 이미지)이면 선택 해제
+      setSelectedFace(null);
     }
   }, [profileImageUrl]);
 
@@ -138,20 +142,20 @@ export default function ProfileChange() {
             resizeMode="cover"
           />
         ) : typeof profileImageUrl === "string" ? (
-  <Image
-    source={{ uri: profileImageUrl }}
-    style={styles.profileImage}
-    resizeMode="cover"
-  />
-) : profileImageUrl ? (
-  <Image
-    source={profileImageUrl}
-    style={styles.profileImage}
-    resizeMode="cover"
-  />
-) : (
-  <Text style={styles.uploadText}>Click to upload</Text>
-)}
+          <Image
+            source={{ uri: profileImageUrl }}
+            style={styles.profileImage}
+            resizeMode="cover"
+          />
+        ) : profileImageUrl ? (
+          <Image
+            source={profileImageUrl}
+            style={styles.profileImage}
+            resizeMode="cover"
+          />
+        ) : (
+          <Text style={styles.uploadText}>Click to upload</Text>
+        )}
       </TouchableOpacity>
 
       <Text style={styles.subtitle}>Pick your favorite one!</Text>

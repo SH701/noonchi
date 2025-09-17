@@ -1,10 +1,10 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import ProfileChange from "@/components/afterlogin/ProfileChange";
 import Loading from "@/components/etc/Loading";
-import { slides } from "@/lib/setting";
-import { Interest, Level, useAuth } from "@/lib/UserContext";
+import { interests } from "@/lib/interests";
+import { Level, useAuth } from "@/lib/UserContext";
+import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   Image,
@@ -15,27 +15,23 @@ import {
   View,
 } from "react-native";
 
-const levelImg: Record<Level, string> = {
-  BEGINNER: "/circle/circle1.png",
-  INTERMEDIATE: "/circle/circle2.png",
-  ADVANCED: "/circle/circle3.png",
+const levelImg: Record<Level, any> = {
+  BEGINNER: require("@/assets/circle/circle1.png"),
+  INTERMEDIATE: require("@/assets/circle/circle2.png"),
+  ADVANCED: require("@/assets/circle/circle3.png"),
 };
-
 export default function AfterPage() {
-  const {
-    koreanLevel,
-    setKoreanLevel,
-    profileImageUrl,
-    interests,
-    setInterests,
-  } = useAuth();
+  const { koreanLevel, setKoreanLevel, profileImageUrl } = useAuth();
   const { accessToken } = useAuth();
   const [current, setCurrent] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [selectedInterests, setSelectedInterests] = useState<number[]>([]);
+  const router = useRouter();
   const canSubmit =
-    current < 2 || (koreanLevel && profileImageUrl && interests.length > 0);
+    current < 2 ||
+    (koreanLevel && profileImageUrl && selectedInterests.length > 0);
 
   useEffect(() => {
     const timer = setTimeout(() => setLoading(false), 1500);
@@ -58,11 +54,15 @@ export default function AfterPage() {
         "Content-Type": "application/json",
       };
       if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
-      const res = await fetch("/api/users/me/profile", {
+      const res = await fetch("https://noonchi.ai.kr/api/users/me/profile", {
         method: "PUT",
         headers,
         credentials: "include",
-        body: JSON.stringify({ koreanLevel, profileImageUrl, interests }),
+        body: JSON.stringify({
+          koreanLevel,
+          profileImageUrl,
+          interests: selectedInterests,
+        }),
       });
 
       const ct = res.headers.get("content-type") || "";
@@ -78,8 +78,7 @@ export default function AfterPage() {
         );
         return;
       }
-
-      console.log("Navigate to main");
+      router.push("/main");
     } catch (e) {
       console.error(e);
       setError("알 수 없는 오류가 발생했습니다.");
@@ -123,7 +122,7 @@ export default function AfterPage() {
                   onPress={() => setKoreanLevel(level as Level)}
                 >
                   <Image
-                    source={require("../assets/characters/character1.png")}
+                    source={levelImg[level as Level]}
                     style={styles.levelImage}
                     resizeMode="contain"
                   />
@@ -159,30 +158,35 @@ export default function AfterPage() {
             </Text>
             {/* Interests Selection */}
             <View style={styles.interestsContainer}>
-              {slides[2].options?.map((interest: Interest) => (
+              {interests.map((interestItem) => (
                 <TouchableOpacity
-                  key={interest}
+                  key={interestItem.id}
                   style={[
                     styles.interestOption,
-                    interests.includes(interest) &&
+                    selectedInterests.includes(interestItem.id) &&
                       styles.interestOptionSelected,
                   ]}
                   onPress={() => {
-                    if (interests.includes(interest)) {
-                      setInterests(interests.filter((i) => i !== interest));
+                    if (selectedInterests.includes(interestItem.id)) {
+                      setSelectedInterests(
+                        selectedInterests.filter((i) => i !== interestItem.id)
+                      );
                     } else {
-                      setInterests([...interests, interest]);
+                      setSelectedInterests([
+                        ...selectedInterests,
+                        interestItem.id,
+                      ]);
                     }
                   }}
                 >
                   <Text
                     style={[
                       styles.interestText,
-                      interests.includes(interest) &&
+                      selectedInterests.includes(interestItem.id) &&
                         styles.interestTextSelected,
                     ]}
                   >
-                    {interest}
+                    {interestItem.content}
                   </Text>
                 </TouchableOpacity>
               ))}

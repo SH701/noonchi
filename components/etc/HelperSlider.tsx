@@ -1,7 +1,5 @@
-"use client";
-
 import { useState } from "react";
-import { Image, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import Svg, { Path } from "react-native-svg";
 
 type Props = {
@@ -14,8 +12,8 @@ type Props = {
   ) => void;
 };
 
-// DownArrow Icon
-const DownArrowIcon = ({ size = 14, color = "#6b7280" }) => (
+// ↓ 아이콘
+const DownArrow = ({ size = 14, color = "#6b7280" }) => (
   <Svg
     width={size}
     height={size}
@@ -32,8 +30,8 @@ const DownArrowIcon = ({ size = 14, color = "#6b7280" }) => (
   </Svg>
 );
 
-// UpArrow Icon
-const UpArrowIcon = ({ size = 14, color = "#6b7280" }) => (
+// ↑ 아이콘
+const UpArrow = ({ size = 14, color = "#6b7280" }) => (
   <Svg
     width={size}
     height={size}
@@ -50,286 +48,213 @@ const UpArrowIcon = ({ size = 14, color = "#6b7280" }) => (
   </Svg>
 );
 
-const styles = StyleSheet.create({
-  tipContainer: {
-    justifyContent: "center",
-    marginBottom: 4,
-  },
-  tipImage: {
-    width: 266,
-    height: 33,
-  },
-  mainContainer: {
-    justifyContent: "center",
-  },
-  sliderContainer: {
-    width: 335,
-    flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: 12,
-    backgroundColor: "white",
-  },
-  intimacySection: {
-    width: 335,
-    paddingHorizontal: 24,
-    maxWidth: 448,
-    borderWidth: 1,
-    borderRadius: 12,
-    borderColor: "#3b82f6",
-    backgroundColor: "#eff6ff",
-    paddingBottom: 24,
-  },
-  formalitySection: {
-    paddingVertical: 8,
-  },
-  sectionHeader: {
-    paddingVertical: 4,
-  },
-  sectionTitle: {
-    fontFamily: "Pretendard",
-    color: "#374151",
-    fontSize: 16,
-    fontStyle: "normal",
-    fontWeight: "500",
-    lineHeight: 20.8,
-  },
-  sliderTrack: {
-    position: "relative",
-    marginBottom: 16,
-    marginTop: 16,
-    height: 16,
-    width: "100%",
-  },
-  sliderBackground: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "#e5e7eb",
-    borderRadius: 8,
-    height: 16,
-    width: "100%",
-  },
-  sliderTick: {
-    position: "absolute",
-    top: "50%",
-    zIndex: 10,
-    transform: [{ translateX: -4 }, { translateY: -4 }],
-    width: 8,
-    height: 8,
-    backgroundColor: "#bfdbfe",
-    borderRadius: 4,
-  },
-  sliderFill: {
-    position: "absolute",
-    top: 0,
-    bottom: 0,
-    left: 0,
-    backgroundColor: "#2563eb",
-    borderRadius: 8,
-    height: 16,
-  },
-  sliderThumb: {
-    position: "absolute",
-    top: "50%",
-    transform: [{ translateY: -14 }, { translateX: -14 }],
-    zIndex: 20,
-  },
-  labelsContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    fontSize: 11,
-    color: "#6b7280",
-    paddingBottom: 8,
-    marginBottom: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: "#d1d5db",
-  },
-  labelItem: {
-    flex: 1,
-  },
-  labelLeft: {
-    alignItems: "flex-start",
-  },
-  labelCenter: {
-    alignItems: "center",
-  },
-  labelRight: {
-    alignItems: "flex-end",
-  },
-  stepContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 2,
-  },
-  stepContainerEnd: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 2,
-    justifyContent: "flex-end",
-  },
-  stepText: {
-    fontSize: 11,
-    color: "#6b7280",
-  },
-});
-
-const steps = [
-  <View key="close" style={styles.stepContainer}>
-    <DownArrowIcon />
-    <Text style={styles.stepText}>Close</Text>
-  </View>,
-  <View key="middle" />,
-  <View key="distant" style={styles.stepContainerEnd}>
-    <Text style={styles.stepText}>Distant</Text>
-    <UpArrowIcon />
-  </View>,
-];
-
-const famSteps = [
-  <View key="Low" style={styles.stepContainer}>
-    <DownArrowIcon />
-    <Text style={styles.stepText}>Low</Text>
-  </View>,
-  <View key="middle" />,
-  <View key="High" style={styles.stepContainerEnd}>
-    <Text style={styles.stepText}>High</Text>
-    <UpArrowIcon />
-  </View>,
-];
-
 export default function HelperSlider({ onChange }: Props) {
-  const [showInfo, setShowInfo] = useState(true);
-  const [level, setLevel] = useState(1);
-  const max = steps.length - 1;
+  const [level, setLevel] = useState(1); 
+  const [fam, setFam] = useState(1); 
+
+  const intimacyMap = [
+    "closeIntimacyExpressions",
+    "mediumIntimacyExpressions",
+    "distantIntimacyExpressions",
+  ] as const;
+  const formalityMap = [
+    "lowFormality",
+    "mediumFormality",
+    "highFormality",
+  ] as const;
+
+  const max = 2;
   const percent = (level / max) * 100;
-  const [fam, setFam] = useState(1);
-  const fMax = famSteps.length - 1;
+  const fMax = 2;
   const fPercent = (fam / fMax) * 100;
 
   const handleUpdate = (newLevel: number, newFam: number) => {
-    const intimacyMap = [
-      "closeIntimacyExpressions",
-      "mediumIntimacyExpressions",
-      "distantIntimacyExpressions",
-    ] as const;
-    const formalityMap = [
-      "lowFormality",
-      "mediumFormality",
-      "highFormality",
-    ] as const;
-
-    console.log("HelperSlider update:", {
-      newLevel,
-      newFam,
-      intimacy: intimacyMap[newLevel],
-      formality: formalityMap[newFam],
-    });
     onChange(intimacyMap[newLevel], formalityMap[newFam]);
   };
 
   return (
-    <>
-      {showInfo && (
-        <View style={styles.tipContainer}>
-          <Image
-            source={require("../../assets/etc/tip.png")}
-            style={styles.tipImage}
-            resizeMode="contain"
-          />
-        </View>
-      )}
+    <View style={styles.wrapper}>
+      {/* TIP 이미지 */}
+      <View style={{ alignItems: "center", marginBottom: 6 }}>
+        <Image
+          source={require("../../assets/etc/tip.png")}
+          style={{ width: 266, height: 33, resizeMode: "contain" }}
+        />
+      </View>
 
-      <View style={styles.mainContainer}>
-        <View style={styles.sliderContainer}>
-          {/* Intimacy Level */}
-          <View style={styles.intimacySection}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Intimacy Level</Text>
-            </View>
-            <View style={styles.sliderTrack}>
-              <View style={styles.sliderBackground} />
-              {steps.map((_, i) => (
-                <View
-                  key={`lvl-tick-${i}`}
-                  style={[
-                    styles.sliderTick,
-                    {
-                      left: `${(i / max) * 100}%`,
-                      marginLeft: i === 0 ? 8 : i === fMax ? -8 : -4,
-                    },
-                  ]}
-                />
-              ))}
-              <View style={[styles.sliderFill, { width: `${percent}%` }]} />
-              <View style={[styles.sliderThumb, { left: `${percent}%` }]} />
-            </View>
-
-            <View style={styles.labelsContainer}>
-              {steps.map((label, i) => (
-                <View
-                  key={`lvl-label-${i}`}
-                  style={[
-                    styles.labelItem,
-                    i === 0
-                      ? styles.labelLeft
-                      : i === steps.length - 1
-                      ? styles.labelRight
-                      : styles.labelCenter,
-                  ]}
-                >
-                  {label}
-                </View>
-              ))}
-            </View>
+      <View style={styles.card}>
+        {/* Intimacy */}
+        <View style={styles.sectionBlue}>
+          <Text style={styles.sectionTitle}>Intimacy Level</Text>
+          {/* Slider */}
+          <View style={styles.track}>
+            <View style={styles.trackBg} />
+            <View style={[styles.trackFill, { width: `${percent}%` }]} />
+            <View
+              style={[styles.thumb, { left: `${percent}%`, marginLeft: -14 }]}
+            />
+            {/* Step ticks */}
+            {[0, 1, 2].map((i) => (
+              <Pressable
+                key={`intimacy-${i}`}
+                style={[
+                  styles.tick,
+                  {
+                    left: `${(i / max) * 100}%`,
+                    marginLeft: i === 0 ? 4 : i === max ? -12 : -2,
+                  },
+                ]}
+                onPress={() => {
+                  setLevel(i);
+                  handleUpdate(i, fam);
+                }}
+              />
+            ))}
           </View>
 
-          {/* Formality Level */}
-          <View style={styles.formalitySection}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Formality Level</Text>
+          {/* Labels */}
+          <View style={styles.labelRow}>
+            <View style={styles.labelLeft}>
+              <DownArrow />
+              <Text style={styles.labelText}>Close</Text>
             </View>
-
-            <View style={styles.sliderTrack}>
-              <View style={styles.sliderBackground} />
-              {famSteps.map((_, i) => (
-                <View
-                  key={`fam-tick-${i}`}
-                  style={[
-                    styles.sliderTick,
-                    {
-                      left: `${(i / fMax) * 100}%`,
-                      marginLeft: i === 0 ? 8 : i === fMax ? -8 : -4,
-                    },
-                  ]}
-                />
-              ))}
-              <View style={[styles.sliderFill, { width: `${fPercent}%` }]} />
-              <View style={[styles.sliderThumb, { left: `${fPercent}%` }]} />
+            <View style={styles.labelRight}>
+              <Text style={styles.labelText}>Distant</Text>
+              <UpArrow />
             </View>
+          </View>
+        </View>
 
-            <View style={styles.labelsContainer}>
-              {famSteps.map((label, i) => (
-                <View
-                  key={`fam-label-${i}`}
-                  style={[
-                    styles.labelItem,
-                    i === 0
-                      ? styles.labelLeft
-                      : i === famSteps.length - 1
-                      ? styles.labelRight
-                      : styles.labelCenter,
-                  ]}
-                >
-                  {label}
-                </View>
-              ))}
+        {/* Formality */}
+        <View style={styles.sectionBlue}>
+          <Text style={styles.sectionTitle}>Formality Level</Text>
+
+          <View style={styles.track}>
+            <View style={styles.trackBg} />
+            <View style={[styles.trackFill, { width: `${fPercent}%` }]} />
+            <View
+              style={[styles.thumb, { left: `${fPercent}%`, marginLeft: -14 }]}
+            />
+            {[0, 1, 2].map((i) => (
+              <Pressable
+                key={`fam-${i}`}
+                style={[
+                  styles.tick,
+                  {
+                    left: `${(i / max) * 100}%`,
+                    marginLeft: i === 0 ? 4 : i === max ? -12 : -2,
+                  },
+                ]}
+                hitSlop={20}
+                onPress={() => {
+                  setFam(i);
+                  handleUpdate(level, i);
+                }}
+              />
+            ))}
+          </View>
+
+          <View style={styles.labelRow}>
+            <View style={styles.labelLeft}>
+              <DownArrow />
+              <Text style={styles.labelText}>Low</Text>
+            </View>
+            <View style={styles.labelRight}>
+              <Text style={styles.labelText}>High</Text>
+              <UpArrow />
             </View>
           </View>
         </View>
       </View>
-    </>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  wrapper: {
+    alignItems: "center",
+  },
+  card: {
+    width: 335,
+    borderRadius: 12,
+    backgroundColor: "white",
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "#60A5FA",
+  },
+  sectionBlue: {
+    padding: 16,
+    backgroundColor: "#EFF6FF",
+    borderBottomWidth: 1,
+    borderColor: "#d1d5db",
+  },
+  sectionWhite: {
+    padding: 16,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#374151",
+    marginBottom: 12,
+  },
+  track: {
+    height: 16,
+    borderRadius: 8,
+    marginBottom: 12,
+    justifyContent: "center",
+  },
+  trackBg: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    height: 16,
+    backgroundColor: "#e5e7eb",
+    borderRadius: 8,
+  },
+  trackFill: {
+    position: "absolute",
+    left: 0,
+    height: 16,
+    backgroundColor: "#2563eb",
+    borderRadius: 8,
+  },
+  thumb: {
+    position: "absolute",
+    top: "50%",
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "white",
+    borderWidth: 2,
+    borderColor: "#2563eb",
+    transform: [{ translateY: -14 }],
+    zIndex: 10,
+  },
+  tick: {
+    position: "absolute",
+    top: "50%",
+    width: 8,
+    height: 8,
+    backgroundColor: "#BFDBFE",
+    borderRadius: 4,
+    transform: [{ translateY: -4 }],
+  },
+  labelRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  labelLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  labelRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  labelText: {
+    fontSize: 12,
+    color: "#6b7280",
+  },
+});

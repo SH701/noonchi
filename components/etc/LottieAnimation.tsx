@@ -1,9 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-'use client';
-
-import LottieView from 'lottie-react-native';
-import { useRef } from 'react';
-import { ViewStyle } from 'react-native';
+import LottieView from "lottie-react-native";
+import { useRef } from "react";
+import { ViewStyle } from "react-native";
 
 interface LottieAnimationProps {
   animationData: any;
@@ -20,7 +17,7 @@ export default function LottieAnimation({
   autoPlay = true,
   style,
   onAnimationFinish,
-  speed = 1
+  speed = 1,
 }: LottieAnimationProps) {
   const lottieRef = useRef<LottieView>(null);
 
@@ -35,4 +32,4 @@ export default function LottieAnimation({
       speed={speed}
     />
   );
-} 
+}

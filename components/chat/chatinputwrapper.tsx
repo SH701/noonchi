@@ -1,5 +1,5 @@
+import { StyleSheet, View } from "react-native";
 import ChatTextInput from "./chattextinput";
-import { View, StyleSheet } from 'react-native';
 
 export default function ChatInputWrapper() {
   return (

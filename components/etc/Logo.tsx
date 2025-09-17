@@ -6,7 +6,7 @@ interface Props {
 
 export default function Logo({ style }: Props) {
   return (
-    <Svg viewBox="0 0 112 24" fill="none">
+    <Svg viewBox="0 0 112 24" fill="none" style={style}>
       <Path
         d="M25.2819 17.8014C29.1797 17.8014 32.3395 13.9687 32.3395 9.2408C32.3395 4.5129 29.1797 0.680176 25.2819 0.680176C21.3841 0.680176 18.2244 4.5129 18.2244 9.2408C18.2244 13.9687 21.3841 17.8014 25.2819 17.8014Z"
         fill="white"

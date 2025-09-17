@@ -48,7 +48,6 @@ export default function Onboard() {
   return (
     <View style={styles.container}>
       <View style={styles.content}>
-        {/* 👇 flex-col + justify-between으로 슬라이더 영역과 버튼 영역을 위/아래로 분리 */}
         <View style={styles.sliderContainer}>
           <ScrollView
             ref={scrollViewRef}
@@ -113,7 +112,7 @@ export default function Onboard() {
 
           <View style={styles.loginContainer}>
             <Text style={styles.loginText}>Already have an account? </Text>
-            <TouchableOpacity onPress={()=>router.push("/(auth)/login")}>
+            <TouchableOpacity onPress={() => router.push("/(auth)/login")}>
               <Text style={styles.loginLink}>Log in</Text>
             </TouchableOpacity>
           </View>
@@ -151,7 +150,7 @@ const styles = StyleSheet.create({
   },
   slideContent: {
     position: "relative",
-    height: 400,
+    height: 430,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -160,8 +159,8 @@ const styles = StyleSheet.create({
   },
   skipButton: {
     position: "absolute",
-    top: 16,
-    right: 16,
+    top: 60,
+    right: 32,
     zIndex: 50,
   },
   skipButtonText: {
@@ -186,7 +185,6 @@ const styles = StyleSheet.create({
     fontFamily: "Pretendard",
     fontSize: 24,
     fontWeight: "600",
-    lineHeight: 28,
     color: "#111827",
   },
   titleTight: {
@@ -205,27 +203,25 @@ const styles = StyleSheet.create({
   description: {
     color: "#9CA3AF",
     marginTop: 8,
-    marginBottom: 12,
     fontSize: 14,
     lineHeight: 18,
     textAlign: "center",
   },
   buttonContainer: {
-    paddingHorizontal: 16,
-    paddingBottom: 24,
+    paddingBottom: 40,
   },
   nextButton: {
-    width: 334,
+    width: "100%",
     maxHeight: 52,
     paddingVertical: 12,
     marginHorizontal: "auto",
     backgroundColor: "#2563eb",
-    borderRadius: 8,
   },
   nextButtonText: {
     color: "white",
     fontWeight: "500",
     textAlign: "center",
+    fontSize: 18,
   },
   loginContainer: {
     flexDirection: "row",

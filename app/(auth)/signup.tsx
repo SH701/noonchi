@@ -1,5 +1,6 @@
 "use client";
 
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -37,9 +38,14 @@ export default function SignupStep1() {
   const router = useRouter();
   const canNext = email.includes("@") && pw.length >= 8 && pw === pw2 && agree;
 
-  const goNext = () => {
+  const goNext = async () => {
     if (!canNext) return;
-    router.push("/(auth)/signup-detail");
+    try {
+      await AsyncStorage.setItem("signupEmail", email);
+      await AsyncStorage.setItem("signupPassword", pw);
+      router.push("/(auth)/signup-detail");
+    } catch (error) {
+    }
   };
 
   const goBack = () => {

@@ -1,10 +1,15 @@
 "use client";
 
+import { useRouter } from "expo-router";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export default function ChatTextInput() {
+  const router = useRouter();
+  const goHonorific = () => {
+    router.push("/main/honorific");
+  };
   return (
-    <TouchableOpacity style={styles.container}>
+    <TouchableOpacity style={styles.container} onPress={goHonorific}>
       <View style={styles.content}>
         <Image
           source={require("../../assets/circle/circle4.png")}
@@ -19,7 +24,7 @@ export default function ChatTextInput() {
 
 const styles = StyleSheet.create({
   container: {
-    width: 340,
+    width: "100%",
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
@@ -33,7 +38,7 @@ const styles = StyleSheet.create({
   content: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 12,
   },
   circleImage: {
     width: 28,
