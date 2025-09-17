@@ -3,6 +3,7 @@
 import Logo from "@/components/etc/Logo";
 import Slider from "@/components/main/slider";
 import { useAuth } from "@/lib/UserContext";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
@@ -61,18 +62,10 @@ export default function Main() {
       },
     })
       .then(async (res) => {
-        // 응답 상태 먼저 체크
-        console.log("Response status:", res.status);
-        console.log("Response ok:", res.ok);
-
-        // 응답이 비어있는지 확인
         const text = await res.text();
-        console.log("Raw response:", text);
-
         if (!text) {
           throw new Error("서버에서 빈 응답을 받았습니다");
         }
-
         let data;
         try {
           data = JSON.parse(text);
@@ -99,6 +92,23 @@ export default function Main() {
 
   return (
     <View style={styles.container}>
+      <TouchableOpacity
+        style={{
+          position: "absolute",
+          top: 100,
+          right: 20,
+          backgroundColor: "red",
+          padding: 10,
+          zIndex: 999,
+        }}
+        onPress={async () => {
+          await AsyncStorage.clear();
+          console.log("AsyncStorage cleared");
+          router.replace("/login");
+        }}
+      >
+        <Text style={{ color: "white" }}>Clear Storage</Text>
+      </TouchableOpacity>
       <View style={styles.content}>
         <View style={styles.welcomeSection}>
           <View>

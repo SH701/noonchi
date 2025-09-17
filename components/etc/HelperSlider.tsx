@@ -1,6 +1,5 @@
-import { useState } from "react";
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
-import Svg, { Path } from "react-native-svg";
+import React, { useRef, useState } from "react";
+import { PanResponder, Pressable, StyleSheet, Text, View } from "react-native";
 
 type Props = {
   onChange: (
@@ -12,88 +11,74 @@ type Props = {
   ) => void;
 };
 
-// ↓ 아이콘
-const DownArrow = ({ size = 14, color = "#6b7280" }) => (
-  <Svg
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke={color}
-  >
-    <Path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M19 14l-7 7m0 0l-7-7m7 7V3"
-    />
-  </Svg>
-);
-
-// ↑ 아이콘
-const UpArrow = ({ size = 14, color = "#6b7280" }) => (
-  <Svg
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke={color}
-  >
-    <Path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M5 10l7-7m0 0l7 7m-7-7v18"
-    />
-  </Svg>
-);
-
 export default function HelperSlider({ onChange }: Props) {
-  const [level, setLevel] = useState(1); 
-  const [fam, setFam] = useState(1); 
+  const [level, setLevel] = useState(1);
+  const [fam, setFam] = useState(1);
+
+  const max = 2;
+  const sliderWidth = 280; // 실제 트랙 너비
+  const thumbSize = 28;
 
   const intimacyMap = [
     "closeIntimacyExpressions",
     "mediumIntimacyExpressions",
     "distantIntimacyExpressions",
   ] as const;
+
   const formalityMap = [
     "lowFormality",
     "mediumFormality",
     "highFormality",
   ] as const;
 
-  const max = 2;
-  const percent = (level / max) * 100;
-  const fMax = 2;
-  const fPercent = (fam / fMax) * 100;
-
   const handleUpdate = (newLevel: number, newFam: number) => {
     onChange(intimacyMap[newLevel], formalityMap[newFam]);
   };
 
+  // 공통 PanResponder
+  const createResponder = (
+    type: "intimacy" | "formality",
+    value: number,
+    setValue: React.Dispatch<React.SetStateAction<number>>
+  ) =>
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onPanResponderMove: (_, gesture) => {
+        let newX = Math.min(Math.max(0, gesture.moveX - 40), sliderWidth);
+        const newValue = Math.round((newX / sliderWidth) * max);
+        if (newValue !== value) {
+          setValue(newValue);
+          if (type === "intimacy") handleUpdate(newValue, fam);
+          else handleUpdate(level, newValue);
+        }
+      },
+    });
+
+  const intimacyResponder = useRef(
+    createResponder("intimacy", level, setLevel)
+  ).current;
+  const formalityResponder = useRef(
+    createResponder("formality", fam, setFam)
+  ).current;
+
   return (
     <View style={styles.wrapper}>
-      {/* TIP 이미지 */}
-      <View style={{ alignItems: "center", marginBottom: 6 }}>
-        <Image
-          source={require("../../assets/etc/tip.png")}
-          style={{ width: 266, height: 33, resizeMode: "contain" }}
-        />
-      </View>
-
       <View style={styles.card}>
         {/* Intimacy */}
         <View style={styles.sectionBlue}>
           <Text style={styles.sectionTitle}>Intimacy Level</Text>
-          {/* Slider */}
           <View style={styles.track}>
             <View style={styles.trackBg} />
-            <View style={[styles.trackFill, { width: `${percent}%` }]} />
             <View
-              style={[styles.thumb, { left: `${percent}%`, marginLeft: -14 }]}
+              style={[styles.trackFill, { width: (level / max) * sliderWidth }]}
             />
-            {/* Step ticks */}
+            <View
+              {...intimacyResponder.panHandlers}
+              style={[
+                styles.thumb,
+                { left: (level / max) * sliderWidth - thumbSize / 2 },
+              ]}
+            />
             {[0, 1, 2].map((i) => (
               <Pressable
                 key={`intimacy-${i}`}
@@ -111,29 +96,26 @@ export default function HelperSlider({ onChange }: Props) {
               />
             ))}
           </View>
-
-          {/* Labels */}
           <View style={styles.labelRow}>
-            <View style={styles.labelLeft}>
-              <DownArrow />
-              <Text style={styles.labelText}>Close</Text>
-            </View>
-            <View style={styles.labelRight}>
-              <Text style={styles.labelText}>Distant</Text>
-              <UpArrow />
-            </View>
+            <Text style={styles.labelText}>Close</Text>
+            <Text style={styles.labelText}>Distant</Text>
           </View>
         </View>
 
         {/* Formality */}
         <View style={styles.sectionBlue}>
           <Text style={styles.sectionTitle}>Formality Level</Text>
-
           <View style={styles.track}>
             <View style={styles.trackBg} />
-            <View style={[styles.trackFill, { width: `${fPercent}%` }]} />
             <View
-              style={[styles.thumb, { left: `${fPercent}%`, marginLeft: -14 }]}
+              style={[styles.trackFill, { width: (fam / max) * sliderWidth }]}
+            />
+            <View
+              {...formalityResponder.panHandlers}
+              style={[
+                styles.thumb,
+                { left: (fam / max) * sliderWidth - thumbSize / 2 },
+              ]}
             />
             {[0, 1, 2].map((i) => (
               <Pressable
@@ -145,7 +127,6 @@ export default function HelperSlider({ onChange }: Props) {
                     marginLeft: i === 0 ? 4 : i === max ? -12 : -2,
                   },
                 ]}
-                hitSlop={20}
                 onPress={() => {
                   setFam(i);
                   handleUpdate(level, i);
@@ -153,16 +134,9 @@ export default function HelperSlider({ onChange }: Props) {
               />
             ))}
           </View>
-
           <View style={styles.labelRow}>
-            <View style={styles.labelLeft}>
-              <DownArrow />
-              <Text style={styles.labelText}>Low</Text>
-            </View>
-            <View style={styles.labelRight}>
-              <Text style={styles.labelText}>High</Text>
-              <UpArrow />
-            </View>
+            <Text style={styles.labelText}>Low</Text>
+            <Text style={styles.labelText}>High</Text>
           </View>
         </View>
       </View>
@@ -171,9 +145,7 @@ export default function HelperSlider({ onChange }: Props) {
 }
 
 const styles = StyleSheet.create({
-  wrapper: {
-    alignItems: "center",
-  },
+  wrapper: { alignItems: "center" },
   card: {
     width: 335,
     borderRadius: 12,
@@ -187,9 +159,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#EFF6FF",
     borderBottomWidth: 1,
     borderColor: "#d1d5db",
-  },
-  sectionWhite: {
-    padding: 16,
   },
   sectionTitle: {
     fontSize: 16,
@@ -233,25 +202,14 @@ const styles = StyleSheet.create({
   tick: {
     position: "absolute",
     top: "50%",
-    width: 8,
-    height: 8,
-    backgroundColor: "#BFDBFE",
-    borderRadius: 4,
-    transform: [{ translateY: -4 }],
+    width: 20, // ✅ 터치영역 크게
+    height: 40,
+    backgroundColor: "transparent", // 안 보이게
+    transform: [{ translateY: -20 }],
   },
   labelRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-  },
-  labelLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  labelRight: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
   },
   labelText: {
     fontSize: 12,

@@ -47,8 +47,6 @@ export default function ProfileChange() {
           return;
         }
       }
-
-      // 이미지 선택
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
@@ -80,13 +78,6 @@ export default function ProfileChange() {
 
   const handleFileUpload = async (asset: ImagePicker.ImagePickerAsset) => {
     try {
-      const formData = new FormData();
-      formData.append("file", {
-        uri: asset.uri,
-        type: "image/jpeg",
-        name: "profile.jpg",
-      } as any);
-
       const presignRes = await fetch("/api/files/presigned-url", {
         method: "POST",
         headers: {
@@ -106,10 +97,14 @@ export default function ProfileChange() {
 
       const { url: uploadUrl } = await presignRes.json();
 
+      // 2. 파일 → blob 변환 후 업로드
+      const fileRes = await fetch(asset.uri);
+      const blob = await fileRes.blob();
+
       const uploadRes = await fetch(uploadUrl, {
         method: "PUT",
         headers: { "Content-Type": "image/jpeg" },
-        body: formData,
+        body: blob,
       });
 
       if (!uploadRes.ok) {
@@ -118,8 +113,20 @@ export default function ProfileChange() {
       }
 
       const publicUrl = uploadUrl.split("?")[0];
+
       setProfileImageUrl(publicUrl);
-      setSelectedFace(null); // 외부 URL로 전환되었으니 선택 해제
+      setSelectedFace(null);
+
+      if (accessToken) {
+        await fetch("https://noonchi.ai.kr/api/users/me/profile", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({ profileImageUrl: publicUrl }),
+        });
+      }
     } catch (err: any) {
       console.error("File upload error", err);
       Alert.alert("Upload Error", "Failed to upload image");

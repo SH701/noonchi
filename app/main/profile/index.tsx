@@ -32,6 +32,12 @@ type Profile = {
   profileImageUrl: string;
   interests: string[];
 };
+const FACES = [
+  require("@/assets/characters/character1.png"),
+  require("@/assets/characters/character2.png"),
+  require("@/assets/characters/character3.png"),
+  require("@/assets/characters/character4.png"),
+];
 
 export default function ProfilePage() {
   const { accessToken } = useAuth();
@@ -39,6 +45,7 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { profileImageUrl } = useAuth();
 
   useEffect(() => {
     if (!accessToken) {
@@ -71,12 +78,34 @@ export default function ProfilePage() {
       await fetch("https://noonchi.ai.kr/api/auth/logout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ refreshToken: "" }), // 필요시 로컬 저장소에서 가져오기
+        body: JSON.stringify({ refreshToken: "" }),
       });
     } catch (err) {
       console.error("Logout failed:", err);
     }
     router.replace("/login");
+  };
+
+  const renderProfileImage = () => {
+    const img = profileImageUrl || profile?.profileImageUrl || null;
+
+    if (!img) {
+      return <View style={[styles.avatar, { backgroundColor: "#E5E7EB" }]} />;
+    }
+
+    if (typeof img === "string") {
+      if (img.startsWith("http")) {
+        return <Image source={{ uri: img }} style={styles.avatar} />;
+      }
+      if (img.startsWith("face")) {
+        const idx = parseInt(img.replace("face", ""), 10);
+        if (!isNaN(idx) && FACES[idx]) {
+          return <Image source={FACES[idx]} style={styles.avatar} />;
+        }
+      }
+    }
+
+    return <Image source={img as any} style={styles.avatar} />;
   };
 
   if (loading) return <ActivityIndicator style={{ marginTop: 40 }} />;
@@ -100,28 +129,23 @@ export default function ProfilePage() {
         <Text style={styles.headerTitle}>Profile</Text>
       </View>
 
-      <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: 40 }}
+        scrollEnabled={false}
+      >
         {/* 프로필 */}
         <View style={styles.profileBox}>
-          <View style={styles.avatarWrapper}>
-            {profile.profileImageUrl ? (
-              <Image
-                source={{ uri: profile.profileImageUrl }}
-                style={styles.avatar}
-              />
-            ) : (
-              <View style={[styles.avatar, { backgroundColor: "#E5E7EB" }]} />
-            )}
-          </View>
+          <View style={styles.avatarWrapper}>{renderProfileImage()}</View>
 
           <TouchableOpacity
-            onPress={() => router.push("/profile/edit" as any)}
+            onPress={() => router.push("/main/profile/edit" as any)}
             style={styles.nameBox}
           >
             <Text style={styles.name}>{profile.nickname}</Text>
             <ChevronRightIcon size={20} color="#9CA3AF" />
           </TouchableOpacity>
         </View>
+
         {/* 통계 카드 */}
         <View style={styles.card}>
           <View style={styles.cardItem}>
@@ -134,6 +158,7 @@ export default function ProfilePage() {
             <Text style={styles.cardValue}>{profile.klevel}</Text>
           </View>
         </View>
+
         {/* 메뉴 */}
         <View style={styles.menu}>
           {[
@@ -172,26 +197,18 @@ export default function ProfilePage() {
             </TouchableOpacity>
           ))}
         </View>
-        if (error) return (
-        <View
-          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
-        >
-          <Text style={{ color: "red", textAlign: "center", marginBottom: 20 }}>
-            Error: {error}
-          </Text>
-          {/* 에러 상황에서도 로그아웃 버튼 표시 */}
-          <TouchableOpacity onPress={handleLogout} style={styles.logoutBtn}>
-            <Text style={styles.logoutText}>Log out</Text>
-          </TouchableOpacity>
-        </View>
-        );
+
+        {/* 로그아웃 버튼 */}
+        <TouchableOpacity onPress={handleLogout} style={styles.logoutBtn}>
+          <Text style={styles.logoutText}>Log out</Text>
+        </TouchableOpacity>
       </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
+  container: { flex: 1, backgroundColor: "#fff", paddingTop: 60 },
   header: {
     paddingHorizontal: 16,
     paddingVertical: 12,

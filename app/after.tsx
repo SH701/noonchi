@@ -121,19 +121,34 @@ export default function AfterPage() {
                   ]}
                   onPress={() => setKoreanLevel(level as Level)}
                 >
-                  <Image
-                    source={levelImg[level as Level]}
-                    style={styles.levelImage}
-                    resizeMode="contain"
-                  />
-                  <Text
-                    style={[
-                      styles.levelText,
-                      koreanLevel === level && styles.levelTextSelected,
-                    ]}
-                  >
-                    {level}
-                  </Text>
+                  {/* 왼쪽: 이미지 + 레벨 (col) */}
+                  <View style={styles.levelCol}>
+                    <Image
+                      source={img}
+                      style={styles.levelImage}
+                      resizeMode="contain"
+                    />
+                    <Text
+                      style={[
+                        styles.levelText,
+                        koreanLevel === level && styles.levelTextSelected,
+                      ]}
+                    >
+                      {level}
+                    </Text>
+                  </View>
+
+                  {/* 오른쪽: 설명 (row) */}
+                  <View style={styles.explanationRow}>
+                    <Text style={styles.explanation}>
+                      {level === "BEGINNER" &&
+                        "I know basic polite words, but I'm not sure when or how to use honorifics."}
+                      {level === "INTERMEDIATE" &&
+                        "I can use endings, but I'm not confident in formal or respectful language correctly."}
+                      {level === "ADVANCED" &&
+                        "I understand and use honorifics naturally depending on context or relationship."}
+                    </Text>
+                  </View>
                 </TouchableOpacity>
               ))}
             </View>
@@ -156,7 +171,6 @@ export default function AfterPage() {
             <Text style={styles.slideDescription}>
               Select topics you`re interested in
             </Text>
-            {/* Interests Selection */}
             <View style={styles.interestsContainer}>
               {interests.map((interestItem) => (
                 <TouchableOpacity
@@ -181,9 +195,8 @@ export default function AfterPage() {
                 >
                   <Text
                     style={[
-                      styles.interestText,
                       selectedInterests.includes(interestItem.id) &&
-                        styles.interestTextSelected,
+                        styles.interestText,
                     ]}
                   >
                     {interestItem.content}
@@ -195,29 +208,26 @@ export default function AfterPage() {
         )}
       </ScrollView>
 
-      {/* Footer */}
-      <View style={styles.footer}>
-        {error && <Text style={styles.errorText}>{error}</Text>}
-        <TouchableOpacity
+      {error && <Text style={styles.errorText}>{error}</Text>}
+      <TouchableOpacity
+        style={[
+          styles.nextButton,
+          canSubmit ? styles.nextButtonEnabled : styles.nextButtonDisabled,
+        ]}
+        onPress={onNext}
+        disabled={!canSubmit}
+      >
+        <Text
           style={[
-            styles.nextButton,
-            canSubmit ? styles.nextButtonEnabled : styles.nextButtonDisabled,
+            styles.nextButtonText,
+            canSubmit
+              ? styles.nextButtonTextEnabled
+              : styles.nextButtonTextDisabled,
           ]}
-          onPress={onNext}
-          disabled={!canSubmit}
         >
-          <Text
-            style={[
-              styles.nextButtonText,
-              canSubmit
-                ? styles.nextButtonTextEnabled
-                : styles.nextButtonTextDisabled,
-            ]}
-          >
-            {current === 2 ? "Complete" : "Next"}
-          </Text>
-        </TouchableOpacity>
-      </View>
+          {current === 2 ? "Complete" : "Next"}
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -261,20 +271,25 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   levelContainer: {
-    flexDirection: "row",
-    justifyContent: "space-around",
     marginTop: 32,
+    gap: 20,
   },
   levelOption: {
+    flexDirection: "row",
     alignItems: "center",
     padding: 16,
     borderRadius: 12,
     borderWidth: 2,
     borderColor: "#e5e7eb",
+    gap: 16,
+  },
+  levelCol: {
+    alignItems: "center",
+    justifyContent: "center",
   },
   levelOptionSelected: {
     borderColor: "#2563eb",
-    backgroundColor: "#eff6ff",
+    backgroundColor: "#EFF6FF",
   },
   levelImage: {
     width: 60,
@@ -282,12 +297,23 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   levelText: {
-    fontSize: 14,
+    fontSize: 10,
     color: "#6b7280",
   },
   levelTextSelected: {
     color: "#2563eb",
-    fontWeight: "500",
+    fontWeight: "600",
+  },
+  explanationRow: {
+    flex: 1,
+    justifyContent: "center",
+    flexShrink: 1, // 남는 공간에 맞춰 줄어들게
+  },
+  explanation: {
+    fontSize: 12,
+    color: "#6b7280",
+    lineHeight: 18,
+    flexWrap: "wrap", // 줄바꿈 허용
   },
   interestsContainer: {
     flexDirection: "row",
@@ -305,19 +331,10 @@ const styles = StyleSheet.create({
   },
   interestOptionSelected: {
     borderColor: "#2563eb",
-    backgroundColor: "#2563eb",
+    backgroundColor: "#EFF6FF",
   },
   interestText: {
     fontSize: 14,
-    color: "#6b7280",
-  },
-  interestTextSelected: {
-    color: "white",
-    fontWeight: "500",
-  },
-  footer: {
-    paddingHorizontal: 24,
-    paddingBottom: 32,
   },
   errorText: {
     color: "#ef4444",
@@ -325,8 +342,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   nextButton: {
-    paddingVertical: 12,
-    borderRadius: 8,
+    paddingVertical: 24,
     alignItems: "center",
   },
   nextButtonEnabled: {
@@ -336,7 +352,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#d1d5db",
   },
   nextButtonText: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "500",
   },
   nextButtonTextEnabled: {

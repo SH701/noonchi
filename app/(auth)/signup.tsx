@@ -2,8 +2,12 @@
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -35,8 +39,22 @@ export default function SignupStep1() {
   const [pw, setPw] = useState("");
   const [pw2, setPw2] = useState("");
   const [agree, setAgree] = useState(false);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
   const router = useRouter();
   const canNext = email.includes("@") && pw.length >= 8 && pw === pw2 && agree;
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener("keyboardDidShow", () => {
+      setKeyboardVisible(true);
+    });
+    const hideSub = Keyboard.addListener("keyboardDidHide", () => {
+      setKeyboardVisible(false);
+    });
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   const goNext = async () => {
     if (!canNext) return;
@@ -44,8 +62,7 @@ export default function SignupStep1() {
       await AsyncStorage.setItem("signupEmail", email);
       await AsyncStorage.setItem("signupPassword", pw);
       router.push("/(auth)/signup-detail");
-    } catch (error) {
-    }
+    } catch (error) {}
   };
 
   const goBack = () => {
@@ -53,95 +70,109 @@ export default function SignupStep1() {
   };
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={goBack} style={styles.backButton}>
-          <ChevronLeftIcon />
-        </TouchableOpacity>
-
-        <Text style={styles.headerTitle}>Create account</Text>
-      </View>
-
-      {/* Main Content */}
-      <View style={styles.content}>
-        <View style={styles.formContainer}>
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="example@gmail.com"
-              placeholderTextColor="#9ca3af"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Password</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="••••••••"
-              placeholderTextColor="#9ca3af"
-              value={pw}
-              onChangeText={setPw}
-              secureTextEntry
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Re-enter your password"
-              placeholderTextColor="#9ca3af"
-              value={pw2}
-              onChangeText={setPw2}
-              secureTextEntry
-            />
-            <Text style={styles.passwordHint}>
-              8–16 characters, include letters & numbers
-            </Text>
-          </View>
-
-          <View style={styles.checkboxContainer}>
-            <TouchableOpacity
-              style={[styles.checkbox, agree && styles.checkboxChecked]}
-              onPress={() => setAgree(!agree)}
-            >
-              {agree && <Text style={styles.checkmark}>✓</Text>}
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+        bounces={false}
+        scrollEnabled={keyboardVisible}
+      >
+        <View style={styles.innerContainer}>
+          {/* Header */}
+          <View style={styles.header}>
+            <TouchableOpacity onPress={goBack} style={styles.backButton}>
+              <ChevronLeftIcon />
             </TouchableOpacity>
-            <View style={styles.termsContainer}>
-              <Text style={styles.termsText}>
-                Agree with <Text style={styles.link}>Terms of use</Text> and our{" "}
-                <Text style={styles.link}>privacy policy</Text>
-              </Text>
+            <Text style={styles.headerTitle}>Create account</Text>
+          </View>
+
+          {/* Main Content */}
+          <View style={styles.content}>
+            <View style={styles.formContainer}>
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Email</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="example@gmail.com"
+                  placeholderTextColor="#9ca3af"
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  returnKeyType="next"
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Password</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="••••••••"
+                  placeholderTextColor="#9ca3af"
+                  value={pw}
+                  onChangeText={setPw}
+                  secureTextEntry
+                  returnKeyType="next"
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Re-enter your password"
+                  placeholderTextColor="#9ca3af"
+                  value={pw2}
+                  onChangeText={setPw2}
+                  secureTextEntry
+                  returnKeyType="done"
+                />
+                <Text style={styles.passwordHint}>
+                  8–16 characters, include letters & numbers
+                </Text>
+              </View>
+
+              <View style={styles.checkboxContainer}>
+                <TouchableOpacity
+                  style={[styles.checkbox, agree && styles.checkboxChecked]}
+                  onPress={() => setAgree(!agree)}
+                >
+                  {agree && <Text style={styles.checkmark}>✓</Text>}
+                </TouchableOpacity>
+                <View style={styles.termsContainer}>
+                  <Text style={styles.termsText}>
+                    Agree with <Text style={styles.link}>Terms of use</Text> and
+                    our <Text style={styles.link}>privacy policy</Text>
+                  </Text>
+                </View>
+              </View>
             </View>
           </View>
-        </View>
-      </View>
 
-      {/* Footer Button */}
-      <View style={styles.footer}>
-        <TouchableOpacity
-          disabled={!canNext}
-          onPress={goNext}
-          style={[
-            styles.nextButton,
-            canNext ? styles.nextButtonEnabled : styles.nextButtonDisabled,
-          ]}
-        >
-          <Text
+          {/* Footer Button */}
+          <TouchableOpacity
+            disabled={!canNext}
+            onPress={goNext}
             style={[
-              styles.nextButtonText,
-              canNext
-                ? styles.nextButtonTextEnabled
-                : styles.nextButtonTextDisabled,
+              styles.nextButton,
+              canNext ? styles.nextButtonEnabled : styles.nextButtonDisabled,
             ]}
           >
-            Next
-          </Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+            <Text
+              style={[
+                styles.nextButtonText,
+                canNext
+                  ? styles.nextButtonTextEnabled
+                  : styles.nextButtonTextDisabled,
+              ]}
+            >
+              Next
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -149,6 +180,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "white",
+  },
+  scrollContent: {
+    flexGrow: 1,
+  },
+  innerContainer: {
+    flex: 1,
     alignSelf: "center",
     paddingTop: 40,
     width: "100%",
@@ -241,15 +278,11 @@ const styles = StyleSheet.create({
     textDecorationLine: "underline",
     color: "#000000",
   },
-  footer: {
-    paddingHorizontal: 16,
-    paddingBottom: 24,
-  },
   nextButton: {
     width: "100%",
-    paddingVertical: 12,
-    borderRadius: 8,
+    paddingVertical: 24,
     alignItems: "center",
+    alignSelf: "stretch",
   },
   nextButtonEnabled: {
     backgroundColor: "#2563eb",
@@ -258,7 +291,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#d1d5db",
   },
   nextButtonText: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "500",
   },
   nextButtonTextEnabled: {

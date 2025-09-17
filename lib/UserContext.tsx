@@ -19,11 +19,13 @@ interface UserContextType {
   profileImageUrl: string | ImageSourcePropType | null;
   interests: Interest[];
   accessToken: string | null;
+  isLoading: boolean;
   setKoreanLevel: (v: Level) => void;
   setSelectedFace: (i: number | null) => void;
   setProfileImageUrl: (url: string | ImageSourcePropType | null) => void;
   setInterests: (v: Interest[]) => void;
   setAccessToken: (token: string | null) => Promise<void>;
+  logout: () => Promise<void>;
 }
 
 const UserContext = createContext<UserContextType | null>(null);
@@ -36,6 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   >(null);
   const [interests, setInterests] = useState<Interest[]>([]);
   const [accessToken, _setAccessToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // 앱 시작 시 토큰 불러오기
   useEffect(() => {
@@ -47,6 +50,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       } catch (err) {
         console.error("Failed to load token:", err);
+      } finally {
+        setIsLoading(false);
       }
     })();
   }, []);
@@ -66,6 +71,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // 로그아웃 함수
+  const logout = async () => {
+    try {
+      await AsyncStorage.multiRemove(["accessToken"]);
+      _setAccessToken(null);
+      // 다른 사용자 데이터도 초기화
+      setKoreanLevel("BEGINNER");
+      setSelectedFace(null);
+      setProfileImageUrl(null);
+      setInterests([]);
+    } catch (err) {
+      console.error("Failed to logout:", err);
+    }
+  };
+
   return (
     <UserContext.Provider
       value={{
@@ -79,6 +99,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setInterests,
         accessToken,
         setAccessToken,
+        isLoading,
+        logout,
       }}
     >
       {children}

@@ -22,8 +22,8 @@ export default function SignupStep2() {
   const [name, setName] = useState("");
   const [birthDate, setBirthDate] = useState("");
   const [gender, setGender] = useState<"MALE" | "FEMALE">("MALE");
-  const [, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const canSubmit = name.trim() !== "" && birthDate !== "";
 
@@ -64,7 +64,15 @@ export default function SignupStep2() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(requestBody),
       });
-      const data = await res.json().catch(() => null);
+      const raw = await res.text();
+      console.log("raw response:", raw);
+
+      let data: any = null;
+      try {
+        data = JSON.parse(raw);
+      } catch (e) {
+        console.error("JSON parse error:", e);
+      }
 
       if (!res.ok) {
         setError(data?.message || "Signup failed");
@@ -104,7 +112,11 @@ export default function SignupStep2() {
       </View>
 
       {/* Main Content */}
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.content}
+        showsVerticalScrollIndicator={false}
+        scrollEnabled={false}
+      >
         {/* Name */}
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Name</Text>
@@ -164,31 +176,30 @@ export default function SignupStep2() {
             ))}
           </View>
         </View>
+        {error && (
+          <Text style={{ color: "red", marginBottom: 16 }}>{error}</Text>
+        )}
       </ScrollView>
 
-      {/* Footer Button */}
-      <View style={styles.footer}>
-        <TouchableOpacity
+      <TouchableOpacity
+        style={[
+          styles.submitButton,
+          canSubmit ? styles.enabledButton : styles.disabledButton,
+        ]}
+        onPress={() => {
+          handleSignup();
+        }}
+        disabled={!canSubmit}
+      >
+        <Text
           style={[
-            styles.submitButton,
-            canSubmit ? styles.enabledButton : styles.disabledButton,
+            styles.submitButtonText,
+            canSubmit ? styles.enabledButtonText : styles.disabledButtonText,
           ]}
-          onPress={() => {
-            console.log("버튼 클릭됨");
-            handleSignup();
-          }}
-          disabled={!canSubmit}
         >
-          <Text
-            style={[
-              styles.submitButtonText,
-              canSubmit ? styles.enabledButtonText : styles.disabledButtonText,
-            ]}
-          >
-            Next
-          </Text>
-        </TouchableOpacity>
-      </View>
+          Next
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -275,17 +286,11 @@ const styles = StyleSheet.create({
   unselectedGenderText: {
     color: "#374151",
   },
-  footer: {
-    paddingHorizontal: 16,
-    paddingBottom: 24,
-  },
   submitButton: {
     width: "100%",
-    maxHeight: 52,
-    paddingVertical: 12,
-    borderRadius: 8,
+    paddingVertical: 24,
     alignItems: "center",
-    justifyContent: "center",
+    alignSelf: "stretch",
   },
   enabledButton: {
     backgroundColor: "#2563eb",
@@ -294,7 +299,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#d1d5db",
   },
   submitButtonText: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "500",
   },
   enabledButtonText: {

@@ -5,7 +5,7 @@ import { useRecorder } from "@/hooks/useRecorder";
 import { useAuth } from "@/lib/UserContext";
 import { Audio } from "expo-av";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Image,
@@ -30,6 +30,9 @@ export default function HonorificHelper() {
 
   const { isRecording, startRecording, stopRecording } = useRecorder();
   const [recording, setRecording] = useState(false);
+  const [scrollEnabled, setScrollEnabled] = useState(false);
+  const [contentHeight, setContentHeight] = useState(0);
+  const [screenHeight, setScreenHeight] = useState(0);
 
   const [formality, setFormality] = useState<
     "lowFormality" | "mediumFormality" | "highFormality"
@@ -41,7 +44,16 @@ export default function HonorificHelper() {
     | "distantIntimacyExpressions"
   >("mediumIntimacyExpressions");
 
-  // 번역 API
+  const requestMicPermission = async () => {
+    const { status } = await Audio.requestPermissionsAsync();
+    console.log("🎤 mic permission:", status);
+    if (status !== "granted") {
+      alert("마이크 권한이 필요합니다!");
+      return false;
+    }
+    return true;
+  };
+
   const handleTranslate = async () => {
     try {
       setLoading(true);
@@ -55,32 +67,25 @@ export default function HonorificHelper() {
           headers: { Authorization: `Bearer ${accessToken}` },
         }
       );
+
       if (!res.ok) {
-        console.log("🔑 accessToken:", accessToken);
         const errText = await res.text();
-        console.error(
-          "❌ Request failed:",
-          res.status,
-          res.statusText,
-          errText
-        );
+        console.error("❌ Request failed:", res.status, errText);
         throw new Error(`Request failed: ${res.status}`);
       }
-      const data = await res.json();
 
+      const data = await res.json();
       setAllResults(data);
       setExplain(data.explain);
 
       const selected = data?.[intimacy]?.[formality] ?? "변환 결과 없음";
       setResult(selected);
     } catch (e) {
-      console.error(e);
+      console.error("번역 에러:", e);
     } finally {
       setLoading(false);
     }
   };
-
-  // TTS
   const handleTTS = async () => {
     try {
       if (!result) return;
@@ -97,14 +102,14 @@ export default function HonorificHelper() {
       if (!res.ok) throw new Error("TTS 요청 실패");
 
       const audioUrl = await res.text();
+      console.log("🎧 audioUrl:", audioUrl);
+
       const { sound } = await Audio.Sound.createAsync({ uri: audioUrl });
       await sound.playAsync();
     } catch (e) {
       console.error("TTS 에러:", e);
     }
   };
-
-  // STT
   const handleSTT = async (url: string) => {
     const res = await fetch("https://noonchi.ai.kr/api/language/stt", {
       method: "POST",
@@ -116,47 +121,93 @@ export default function HonorificHelper() {
     });
 
     if (!res.ok) throw new Error("STT 요청 실패");
+
     const text = await res.text();
     setSource(text);
   };
-
-  // 마이크 버튼
   const handleMicClick = async () => {
-    if (isRecording) {
-      const file = await stopRecording();
-      setRecording(false);
+    try {
+      if (isRecording) {
+        const file = await stopRecording();
+        setRecording(false);
 
-      const res = await fetch("https://noonchi.ai.kr/api/files/presigned-url", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({
-          fileType: "audio.wav",
-          fileExtension: "wav",
-        }),
-      });
+        const res = await fetch(
+          "https://noonchi.ai.kr/api/files/presigned-url",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${accessToken}`,
+            },
+            body: JSON.stringify({
+              fileType: "audio.wav",
+              fileExtension: "wav",
+            }),
+          }
+        );
 
-      if (!res.ok) throw new Error("presigned-url 요청 실패");
-      const { url: presignedUrl } = await res.json();
+        if (!res.ok) throw new Error("presigned-url 요청 실패");
+        const { url: presignedUrl } = await res.json();
 
-      await fetch(presignedUrl, {
-        method: "PUT",
-        headers: { "Content-Type": "audio/wav" },
-        body: file,
-      });
+        await fetch(presignedUrl, {
+          method: "PUT",
+          headers: { "Content-Type": "audio/wav" },
+          body: file,
+        });
 
-      const audioUrl = presignedUrl.split("?")[0];
-      await handleSTT(audioUrl);
-    } else {
-      startRecording();
-      setRecording(true);
+        const audioUrl = presignedUrl.split("?")[0];
+        await handleSTT(audioUrl);
+      } else {
+        const granted = await requestMicPermission();
+        if (!granted) return;
+
+        await Audio.setAudioModeAsync({
+          allowsRecordingIOS: true,
+          playsInSilentModeIOS: true,
+          shouldDuckAndroid: true,
+          playThroughEarpieceAndroid: false,
+        });
+
+        startRecording();
+        setRecording(true);
+      }
+    } catch (err) {
+      console.error("🎤 Mic error:", err);
     }
   };
 
+  useEffect(() => {
+    if (result) handleTTS();
+  }, [result]);
+
+  // ✅ 오디오 모드 기본 세팅 (TTS 재생)
+  useEffect(() => {
+    (async () => {
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: false,
+        staysActiveInBackground: true,
+        playsInSilentModeIOS: true,
+        shouldDuckAndroid: true,
+        playThroughEarpieceAndroid: false,
+      });
+    })();
+  }, []);
+
   return (
-    <View style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      scrollEnabled={scrollEnabled} // ✅ 자동 제어
+      contentContainerStyle={{ flexGrow: 1 }}
+      onContentSizeChange={(_, height) => {
+        setContentHeight(height);
+        setScrollEnabled(height > screenHeight);
+      }}
+      onLayout={(e) => {
+        const { height } = e.nativeEvent.layout;
+        setScreenHeight(height);
+        setScrollEnabled(contentHeight > height);
+      }}
+    >
       {/* 헤더 */}
       <View style={styles.header}>
         <TouchableOpacity
@@ -169,12 +220,13 @@ export default function HonorificHelper() {
         <View style={{ width: 32 }} />
       </View>
 
-      <ScrollView contentContainerStyle={{ padding: 16 }}>
+      <View style={{ padding: 16 }}>
         {/* 입력 영역 */}
         <View style={styles.box}>
           <TextInput
             style={styles.textarea}
             placeholder="Please enter a sentence..."
+            placeholderTextColor="#9CA3AF"
             multiline
             value={source}
             onChangeText={setSource}
@@ -193,13 +245,13 @@ export default function HonorificHelper() {
             <Text style={{ color: "white" }}>Submit</Text>
           </TouchableOpacity>
           <View style={styles.line}></View>
-          <View style={styles.resultbox}>
+          <View>
             {loading ? (
-              <ActivityIndicator color="#3b82f6" />
+              <ActivityIndicator color="#3b82f6" style={{ height: 80 }} />
             ) : (
               <View style={{ flexDirection: "row", alignItems: "flex-end" }}>
                 <TextInput
-                  style={[styles.result, { flex: 1 }]} // ✅ flex:1로 텍스트 영역 확장
+                  style={[styles.result, { flex: 1 }]}
                   value={result}
                   multiline
                   editable={false}
@@ -221,6 +273,7 @@ export default function HonorificHelper() {
             }}
           />
         </View>
+
         {/* Coach */}
         <View style={styles.box}>
           <Text style={{ fontWeight: "600" }}>Noonchi Coach</Text>
@@ -230,13 +283,13 @@ export default function HonorificHelper() {
               : explain || "The conversion has not been run yet."}
           </Text>
         </View>
-      </ScrollView>
-    </View>
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F9FAFB", paddingTop: 60 },
+  container: { backgroundColor: "#F9FAFB", paddingTop: 60 },
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -293,7 +346,6 @@ const styles = StyleSheet.create({
     color: "#000000",
     paddingVertical: 10,
   },
-  resultbox: {},
   line: {
     width: "100%",
     borderTopWidth: 1,

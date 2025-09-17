@@ -1,9 +1,15 @@
 import { Stack, usePathname } from "expo-router";
-
 import TabBar from "../../components/etc/tab-bar";
 
 export default function MainLayout() {
   const pathname = usePathname();
+
+  const showTabBar = [
+    "/main",
+    "/main/profile",
+    "/main/chatbot",
+  ].includes(pathname);
+
   return (
     <>
       <Stack screenOptions={{ headerShown: false }}>
@@ -13,7 +19,7 @@ export default function MainLayout() {
         <Stack.Screen name="honorific/index" />
         <Stack.Screen name="profile/index" />
       </Stack>
-      {!["/main/honorific", "/main/custom"].includes(pathname) && <TabBar />}
+      {showTabBar && <TabBar />}
     </>
   );
 }
