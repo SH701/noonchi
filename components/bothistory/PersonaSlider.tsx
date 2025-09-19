@@ -44,7 +44,7 @@ export default function PersonaSlider({
 
     const fetchPersonas = async () => {
       try {
-        const API_BASE = "https://noonchi.ai.kr"; // 👈 서버 주소로 교체
+        const API_BASE = "https://noonchi.ai.kr";
         const res = await fetch(`${API_BASE}/api/personas/my?page=1&size=10`, {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
   container: { overflow: "hidden" },
   scrollContent: { flexDirection: "row", alignItems: "center" },
   addButton: {
-    borderRadius: 28,
+    borderRadius: 9999,
     backgroundColor: "#3b82f6",
     alignItems: "center",
     justifyContent: "center",
@@ -160,7 +160,7 @@ const styles = StyleSheet.create({
   itemContainer: { alignItems: "center" },
   profileImage: { borderRadius: 34, backgroundColor: "#e5e7eb" },
   placeholderImage: {
-    borderRadius: 34,
+    borderRadius: 9999,
     backgroundColor: "#d1d5db",
     alignItems: "center",
     justifyContent: "center",

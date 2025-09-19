@@ -1,27 +1,27 @@
-"use client"
+"use client";
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef } from "react";
 import {
-  View,
+  Animated,
+  Dimensions,
+  StyleSheet,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
-  Animated,
-} from 'react-native'
-import Svg, { Path } from 'react-native-svg'
-
+  View,
+} from "react-native";
+import Svg, { Path } from "react-native-svg";
 type Props = {
-  value: string
-  onChange: (v: string) => void
-  onSubmit?: () => void
-  isOpen: boolean
-  onToggle: () => void
-  placeholder?: string
-  className?: string
-}
+  value: string;
+  onChange: (v: string) => void;
+  onSubmit?: () => void;
+  isOpen: boolean;
+  onToggle: () => void;
+  placeholder?: string;
+  className?: string;
+};
 
 // MagnifyingGlassIcon
-const MagnifyingGlassIcon = ({ size = 24, color = '#374151' }) => (
+const MagnifyingGlassIcon = ({ size = 24, color = "#374151" }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path
       d="M21 21L16.514 16.506L21 21ZM19 10.5C19 15.194 15.194 19 10.5 19C5.806 19 2 15.194 2 10.5C2 5.806 5.806 2 10.5 2C15.194 2 19 5.806 19 10.5Z"
@@ -31,10 +31,10 @@ const MagnifyingGlassIcon = ({ size = 24, color = '#374151' }) => (
       strokeLinejoin="round"
     />
   </Svg>
-)
+);
 
 // XMarkIcon
-const XMarkIcon = ({ size = 16, color = '#6b7280' }) => (
+const XMarkIcon = ({ size = 16, color = "#6b7280" }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path
       d="M18 6L6 18M6 6L18 18"
@@ -44,7 +44,7 @@ const XMarkIcon = ({ size = 16, color = '#6b7280' }) => (
       strokeLinejoin="round"
     />
   </Svg>
-)
+);
 
 export default function SearchBar({
   value,
@@ -52,19 +52,19 @@ export default function SearchBar({
   onSubmit,
   isOpen,
   onToggle,
-  placeholder = 'Search...',
-  className = '',
+  placeholder = "Search...",
+  className = "",
 }: Props) {
-  const inputRef = useRef<TextInput>(null)
-  const animatedWidth = useRef(new Animated.Value(0)).current
-  const animatedOpacity = useRef(new Animated.Value(0)).current
-
+  const inputRef = useRef<TextInput>(null);
+  const animatedWidth = useRef(new Animated.Value(0)).current;
+  const animatedOpacity = useRef(new Animated.Value(0)).current;
+  const screenWidth = Dimensions.get("window").width;
   // 열릴 때 자동 포커스
   useEffect(() => {
     if (isOpen) {
       Animated.parallel([
         Animated.timing(animatedWidth, {
-          toValue: 120,
+          toValue: screenWidth * 0.4,
           duration: 250,
           useNativeDriver: false,
         }),
@@ -73,10 +73,10 @@ export default function SearchBar({
           duration: 250,
           useNativeDriver: false,
         }),
-      ]).start()
-      
-      const id = requestAnimationFrame(() => inputRef.current?.focus())
-      return () => cancelAnimationFrame(id)
+      ]).start();
+
+      const id = requestAnimationFrame(() => inputRef.current?.focus());
+      return () => cancelAnimationFrame(id);
     } else {
       Animated.parallel([
         Animated.timing(animatedWidth, {
@@ -89,9 +89,9 @@ export default function SearchBar({
           duration: 250,
           useNativeDriver: false,
         }),
-      ]).start()
+      ]).start();
     }
-  }, [isOpen])
+  }, [isOpen]);
 
   return (
     <View style={styles.container}>
@@ -101,7 +101,7 @@ export default function SearchBar({
           {
             width: animatedWidth,
             opacity: animatedOpacity,
-          }
+          },
         ]}
       >
         <TextInput
@@ -118,7 +118,7 @@ export default function SearchBar({
         {value && (
           <TouchableOpacity
             style={styles.clearButton}
-            onPress={() => onChange('')}
+            onPress={() => onChange("")}
             accessibilityLabel="clear"
           >
             <XMarkIcon />
@@ -130,38 +130,38 @@ export default function SearchBar({
       <TouchableOpacity
         style={styles.toggleButton}
         onPress={onToggle}
-        accessibilityLabel={isOpen ? 'close search' : 'open search'}
+        accessibilityLabel={isOpen ? "close search" : "open search"}
       >
         <MagnifyingGlassIcon />
       </TouchableOpacity>
     </View>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 8,
   },
   searchContainer: {
-    position: 'relative',
-    overflow: 'hidden',
+    position: "relative",
+    overflow: "hidden",
   },
   input: {
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: "#d1d5db",
     borderRadius: 4,
     paddingLeft: 12,
     paddingRight: 28,
     paddingVertical: 8,
     fontSize: 14,
-    backgroundColor: 'white',
+    backgroundColor: "white",
   },
   clearButton: {
-    position: 'absolute',
+    position: "absolute",
     right: 6,
-    top: '50%',
+    top: "50%",
     transform: [{ translateY: -8 }],
     padding: 4,
     borderRadius: 4,
@@ -170,4 +170,4 @@ const styles = StyleSheet.create({
     padding: 6,
     borderRadius: 4,
   },
-})
+});
