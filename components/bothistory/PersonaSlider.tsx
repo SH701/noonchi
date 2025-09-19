@@ -1,17 +1,13 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-// components/bothistory/PersonaSlider.tsx
-"use client";
-
-import { useEffect, useState, useMemo } from "react";
+import { useAuth } from "@/lib/UserContext";
+import React, { useEffect, useMemo, useState } from "react";
 import {
-  View,
-  Text,
-  TouchableOpacity,
   Image,
   ScrollView,
   StyleSheet,
-  Dimensions,
-} from 'react-native';
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 export type PersonaSlide =
   | { isAdd: true }
@@ -23,17 +19,13 @@ export type PersonaSlide =
     };
 
 type Props = {
-  onAdd?: () => void; // '+' 클릭
-  onItemClick?: (idx: number, it: PersonaSlide) => void; // 아이템 클릭(모달 오픈용)
+  onAdd?: () => void;
+  onItemClick?: (idx: number, it: PersonaSlide) => void;
   itemSize?: number;
   gap?: number;
   visibleCount?: number;
   viewportWidth?: number;
-  className?: string;
 };
-
-const normalizeSrc = (src?: string) =>
-  !src ? "" : src.startsWith("http") || src.startsWith("/") ? src : `/${src}`;
 
 export default function PersonaSlider({
   onAdd,
@@ -42,24 +34,21 @@ export default function PersonaSlider({
   gap = 12,
   visibleCount = 5,
   viewportWidth,
-  className,
 }: Props) {
+  const { accessToken } = useAuth();
   const [items, setItems] = useState<PersonaSlide[]>([]);
 
   // ✅ API 호출
   useEffect(() => {
+    if (!accessToken) return;
+
     const fetchPersonas = async () => {
       try {
-        const res = await fetch("/api/personas/my?page=1&size=10", {
-          headers: {
-            Authorization: `Bearer ${
-              localStorage.getItem("accessToken") ?? ""
-            }`,
-          },
+        const API_BASE = "https://noonchi.ai.kr"; // 👈 서버 주소로 교체
+        const res = await fetch(`${API_BASE}/api/personas/my?page=1&size=10`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
         });
         const data = await res.json();
-
-        // data가 배열이면 직접 사용, 아니면 data.content 사용
         const personas = Array.isArray(data) ? data : data?.content || [];
 
         const mapped: PersonaSlide[] = personas.map((p: any) => ({
@@ -68,7 +57,6 @@ export default function PersonaSlider({
           profileImageUrl: p.profileImageUrl || p.imageUrl,
         }));
 
-        // 마지막에 '+' 버튼 추가
         setItems([{ isAdd: true }, ...mapped]);
       } catch (err) {
         console.error("Persona fetch error", err);
@@ -76,7 +64,7 @@ export default function PersonaSlider({
     };
 
     fetchPersonas();
-  }, []);
+  }, [accessToken]);
 
   const viewW =
     viewportWidth ?? visibleCount * itemSize + (visibleCount - 1) * gap;
@@ -87,16 +75,11 @@ export default function PersonaSlider({
   );
 
   if (!items || items.length === 0) {
-    // 로딩 또는 데이터 없음 → '+'만
     return (
       <View style={[styles.container, { width: viewW }]}>
         <TouchableOpacity
           onPress={onAdd}
-          style={[
-            styles.addButton,
-            { width: itemSize, height: itemSize }
-          ]}
-          accessibilityLabel="Add persona"
+          style={[styles.addButton, { width: itemSize, height: itemSize }]}
         >
           <Text style={styles.addButtonText}>+</Text>
         </TouchableOpacity>
@@ -111,7 +94,7 @@ export default function PersonaSlider({
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={[
           styles.scrollContent,
-          { width: trackWidth, columnGap: gap }
+          { width: trackWidth, columnGap: gap },
         ]}
       >
         {items.map((it, i) =>
@@ -119,11 +102,7 @@ export default function PersonaSlider({
             <TouchableOpacity
               key={`add-${i}`}
               onPress={onAdd}
-              style={[
-                styles.addButton,
-                { width: itemSize, height: itemSize }
-              ]}
-              accessibilityLabel="Add persona"
+              style={[styles.addButton, { width: itemSize, height: itemSize }]}
             >
               <Text style={styles.addButtonText}>+</Text>
             </TouchableOpacity>
@@ -133,24 +112,20 @@ export default function PersonaSlider({
               style={[styles.itemContainer, { width: itemSize }]}
             >
               {it.profileImageUrl ? (
-                <TouchableOpacity
-                  onPress={() => onItemClick?.(i, it)}
-                  style={styles.imageContainer}
-                >
+                <TouchableOpacity onPress={() => onItemClick?.(i, it)}>
                   <Image
-                    source={{ uri: normalizeSrc(it.profileImageUrl) }}
+                    source={{ uri: it.profileImageUrl }}
                     style={[
                       styles.profileImage,
-                      { width: itemSize, height: itemSize }
+                      { width: itemSize, height: itemSize },
                     ]}
-                    resizeMode="cover"
                   />
                 </TouchableOpacity>
               ) : (
                 <View
                   style={[
                     styles.placeholderImage,
-                    { width: itemSize, height: itemSize }
+                    { width: itemSize, height: itemSize },
                   ]}
                 >
                   <Text style={styles.placeholderText}>
@@ -158,13 +133,8 @@ export default function PersonaSlider({
                   </Text>
                 </View>
               )}
-
-              {/* ✅ 이미지 밑에 이름 표시 */}
               <Text
-                style={[
-                  styles.nameText,
-                  { maxWidth: itemSize }
-                ]}
+                style={[styles.nameText, { maxWidth: itemSize }]}
                 numberOfLines={1}
               >
                 {it.name}
@@ -178,49 +148,28 @@ export default function PersonaSlider({
 }
 
 const styles = StyleSheet.create({
-  container: {
-    overflow: 'hidden',
-  },
-  scrollContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
+  container: { overflow: "hidden" },
+  scrollContent: { flexDirection: "row", alignItems: "center" },
   addButton: {
     borderRadius: 28,
-    backgroundColor: '#3b82f6',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#3b82f6",
+    alignItems: "center",
+    justifyContent: "center",
   },
-  addButtonText: {
-    color: 'white',
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  itemContainer: {
-    alignItems: 'center',
-  },
-  imageContainer: {
-    borderRadius: 34,
-    overflow: 'hidden',
-    backgroundColor: '#e5e7eb',
-  },
-  profileImage: {
-    borderRadius: 34,
-  },
+  addButtonText: { color: "white", fontSize: 24, fontWeight: "bold" },
+  itemContainer: { alignItems: "center" },
+  profileImage: { borderRadius: 34, backgroundColor: "#e5e7eb" },
   placeholderImage: {
     borderRadius: 34,
-    backgroundColor: '#d1d5db',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#d1d5db",
+    alignItems: "center",
+    justifyContent: "center",
   },
-  placeholderText: {
-    fontSize: 14,
-    color: '#6b7280',
-  },
+  placeholderText: { fontSize: 14, color: "#6b7280" },
   nameText: {
     fontSize: 12,
-    textAlign: 'center',
+    textAlign: "center",
     marginTop: 4,
-    color: '#374151',
+    color: "#374151",
   },
 });

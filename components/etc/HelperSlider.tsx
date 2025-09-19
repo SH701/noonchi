@@ -145,11 +145,10 @@ export default function HelperSlider({ onChange }: Props) {
 }
 
 const styles = StyleSheet.create({
-  wrapper: { alignItems: "center" },
+  wrapper: { alignItems: "center", width: "100%" },
   card: {
-    width: 335,
+    width: "100%",
     borderRadius: 12,
-    backgroundColor: "white",
     overflow: "hidden",
     borderWidth: 1,
     borderColor: "#60A5FA",

@@ -102,7 +102,6 @@ export default function HonorificHelper() {
       if (!res.ok) throw new Error("TTS 요청 실패");
 
       const audioUrl = await res.text();
-      console.log("🎧 audioUrl:", audioUrl);
 
       const { sound } = await Audio.Sound.createAsync({ uri: audioUrl });
       await sound.playAsync();
@@ -262,25 +261,29 @@ export default function HonorificHelper() {
               </View>
             )}
           </View>
-          <HelperSlider
-            onChange={(i, f) => {
-              setIntimacy(i);
-              setFormality(f);
-              if (allResults) {
-                const selected = allResults[i]?.[f] ?? "결과 없음";
-                setResult(selected);
-              }
-            }}
-          />
+          <View style={{ marginTop: 12, marginHorizontal: -16 ,marginBottom:-16}}>
+            <HelperSlider
+              onChange={(i, f) => {
+                setIntimacy(i);
+                setFormality(f);
+                if (allResults) {
+                  const selected = allResults[i]?.[f] ?? "결과 없음";
+                  setResult(selected);
+                }
+              }}
+            />
+          </View>
         </View>
 
         {/* Coach */}
         <View style={styles.box}>
           <Text style={{ fontWeight: "600" }}>Noonchi Coach</Text>
           <Text style={{ marginTop: 8 }}>
-            {loading
-              ? "Loading..."
-              : explain || "The conversion has not been run yet."}
+            {loading ? (
+              <ActivityIndicator color="#3b82f6" style={{ height: 80 }} />
+            ) : (
+              explain || "The conversion has not been run yet."
+            )}
           </Text>
         </View>
       </View>

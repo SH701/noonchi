@@ -5,6 +5,8 @@ import { useAuth } from "@/lib/UserContext";
 import { useState } from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Svg, { Circle, Path } from "react-native-svg";
+import Language from "../../assets/etc/language.svg";
+import Volume from "../../assets/etc/volume_up.svg";
 import HonorificSlider, { HonorificResults } from "./HonorificSlider";
 
 type MessageItemProps = {
@@ -37,42 +39,6 @@ const SpinnerIcon = ({ size = 16, color = "#6b7280" }) => (
       opacity={0.25}
     />
     <Path fill={color} opacity={0.75} d="M4 12a8 8 0 018-8v8H4z" />
-  </Svg>
-);
-
-// Volume Icon
-const VolumeIcon = ({ size = 20, color = "#6b7280" }) => (
-  <Svg
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke={color}
-  >
-    <Path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M6.343 6.343a9 9 0 000 11.314M12 6v12"
-    />
-  </Svg>
-);
-
-// Language Icon
-const LanguageIcon = ({ size = 20, color = "#6b7280" }) => (
-  <Svg
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke={color}
-  >
-    <Path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"
-    />
   </Svg>
 );
 
@@ -265,7 +231,7 @@ export default function MessageItem({
                     {loadingTTs[m.messageId] ? (
                       <SpinnerIcon size={16} color="#6b7280" />
                     ) : (
-                      <VolumeIcon />
+                      <Volume />
                     )}
                   </TouchableOpacity>
                   <TouchableOpacity
@@ -273,7 +239,7 @@ export default function MessageItem({
                     disabled={loadingTranslate[m.messageId]}
                     style={styles.actionButton}
                   >
-                    <LanguageIcon />
+                    <Language />
                   </TouchableOpacity>
                 </View>
               </View>

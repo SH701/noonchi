@@ -142,7 +142,11 @@ export default function ProfilePage() {
             style={styles.nameBox}
           >
             <Text style={styles.name}>{profile.nickname}</Text>
-            <ChevronRightIcon size={20} color="#9CA3AF" />
+            <ChevronRightIcon
+              size={20}
+              color="#9CA3AF"
+              style={{ position: "absolute" ,right:-18,top:4}}
+            />
           </TouchableOpacity>
         </View>
 
@@ -221,7 +225,11 @@ const styles = StyleSheet.create({
   avatarWrapper: { marginBottom: 12 },
   avatar: { width: 120, height: 120, borderRadius: 60 },
   nameBox: { flexDirection: "row", alignItems: "center" },
-  name: { fontSize: 20, fontWeight: "600", marginRight: 6 },
+  name: {
+    fontSize: 20,
+    fontWeight: "600",
+    marginRight: 6,
+  },
   card: {
     flexDirection: "row",
     backgroundColor: "#EFF6FF",

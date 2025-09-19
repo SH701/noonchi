@@ -1,7 +1,14 @@
 "use client";
 
 import { SetStateAction, useState } from "react";
-import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import Svg, { Path } from "react-native-svg";
 
 const ChevronDownIcon = ({ size = 20, color = "#6b7280" }) => (
@@ -105,12 +112,15 @@ const CustomSlider = ({
   );
 };
 
-export default function HonorificSlider() {
+export default function HonorificSlider({
+  category = "ask_eat",
+}: {
+  category?: "ask_eat" | "ask_did_you_eat" | "apology";
+}) {
   const [showex, setShowex] = useState(false);
   const [showInfo, setShowInfo] = useState(true);
   const [level, setLevel] = useState(1); // intimacy
   const [fam, setFam] = useState(1); // formality
-
   const expressions = {
     ask_eat: [
       [
@@ -279,10 +289,16 @@ export default function HonorificSlider() {
     ],
   } as const;
 
-  const currentSentence = expressions.ask_eat[level][fam];
+  const currentSentence = expressions[category][level][fam];
 
   return (
-    <View style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={{ alignItems: "center", paddingBottom: 160 }}
+      scrollEnabled={showex}
+      bounces={false} 
+      alwaysBounceVertical={false} 
+    >
       <Text style={styles.title}>Today`s honorific expression</Text>
 
       {/* 오늘의 문장 */}
@@ -344,14 +360,13 @@ export default function HonorificSlider() {
           <Text style={styles.labelText}>High</Text>
         </View>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     width: "100%",
-    alignItems: "center",
     borderRadius: 12,
     backgroundColor: "white",
     paddingBottom: 24,
@@ -361,7 +376,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   sentenceContainer: {
-    width: 296,
+    width: "90%",
     backgroundColor: "#f3f4f6",
     borderWidth: 1,
     borderColor: "#e5e7eb",
@@ -383,7 +398,7 @@ const styles = StyleSheet.create({
     top: 12,
   },
   explanationContainer: {
-    width: 296,
+    width: "90%",
     padding: 12,
     borderRadius: 8,
     marginBottom: 6,

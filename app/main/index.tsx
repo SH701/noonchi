@@ -70,10 +70,8 @@ export default function Main() {
         try {
           data = JSON.parse(text);
         } catch (parseError) {
-          console.error("JSON 파싱 에러:", parseError);
           throw new Error(`서버 응답을 파싱할 수 없습니다: ${text}`);
         }
-
         if (!res.ok) {
           throw new Error(data.message || `Error ${res.status}`);
         }
@@ -81,7 +79,6 @@ export default function Main() {
         setProfile(data);
       })
       .catch((err) => {
-        console.error("API 요청 에러:", err);
         setError(err.message);
       });
   }, [accessToken]);
@@ -103,7 +100,6 @@ export default function Main() {
         }}
         onPress={async () => {
           await AsyncStorage.clear();
-          console.log("AsyncStorage cleared");
           router.replace("/login");
         }}
       >
