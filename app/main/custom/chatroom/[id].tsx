@@ -72,7 +72,6 @@ export default function Chatroom() {
   const [showVoiceError, setShowVoiceError] = useState(false);
   const [micState, setMicState] = useState<MicState>("idle");
 
-  // 애니메이션을 위한 Animated.Value
   const voiceErrorOpacity = useRef(new Animated.Value(0)).current;
 
   const handleKeyboardClick = () => {
@@ -311,6 +310,7 @@ export default function Chatroom() {
         Alert.alert("오류", "대화 종료에 실패했습니다.");
         return;
       }
+      setLoadingModalOpen(false);
       router.push(`/main/custom/chatroom/${id}/result`);
     } catch (e) {
       console.error("대화 종료 오류:", e);
@@ -470,7 +470,7 @@ export default function Chatroom() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
-          onPress={() => router.back()}
+          onPress={() => router.push("/main")}
           style={styles.headerButton}
         >
           <Text style={styles.backIcon}>←</Text>
@@ -737,22 +737,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderTopWidth: 1,
     borderTopColor: "#e5e7eb",
-    minHeight: 139,
+    minHeight: 120,
     justifyContent: "center",
     alignItems: "center",
   },
   voiceInputContainer: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "center",
+    gap:40,
     width: "100%",
-    maxWidth: 334,
   },
   sideButton: {
-    width: 48,
-    height: 48,
+    width: 60,
+    height: 60,
     backgroundColor: "#ffffff",
-    borderRadius: 24,
+    borderRadius: 30,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -768,9 +768,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     width: "100%",
-    maxWidth: 334,
     backgroundColor: "#ffffff",
-    borderRadius: 25,
+    borderRadius:9999,
     borderWidth: 1,
     borderColor: "#93c5fd", // blue-300
     paddingHorizontal: 8,

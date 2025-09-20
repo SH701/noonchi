@@ -1,6 +1,7 @@
 import { useAuth } from "@/lib/UserContext";
 import React, { useEffect, useMemo, useState } from "react";
 import {
+  Dimensions,
   Image,
   ScrollView,
   StyleSheet,
@@ -37,7 +38,7 @@ export default function PersonaSlider({
 }: Props) {
   const { accessToken } = useAuth();
   const [items, setItems] = useState<PersonaSlide[]>([]);
-
+  const { width: SCREEN_WIDTH } = Dimensions.get("window");
   // ✅ API 호출
   useEffect(() => {
     if (!accessToken) return;
@@ -66,8 +67,7 @@ export default function PersonaSlider({
     fetchPersonas();
   }, [accessToken]);
 
-  const viewW =
-    viewportWidth ?? visibleCount * itemSize + (visibleCount - 1) * gap;
+  const viewW = viewportWidth ?? SCREEN_WIDTH;
   const trackWidth = useMemo(
     () =>
       items?.length ? items.length * itemSize + (items.length - 1) * gap : 0,
@@ -99,13 +99,18 @@ export default function PersonaSlider({
       >
         {items.map((it, i) =>
           "isAdd" in it && it.isAdd ? (
-            <TouchableOpacity
-              key={`add-${i}`}
-              onPress={onAdd}
-              style={[styles.addButton, { width: itemSize, height: itemSize }]}
-            >
-              <Text style={styles.addButtonText}>+</Text>
-            </TouchableOpacity>
+            <View key={`add-${i}`} style={{ alignItems: "center" }}>
+              <TouchableOpacity
+                onPress={onAdd}
+                style={[
+                  styles.addButton,
+                  { width: itemSize, height: itemSize },
+                ]}
+              >
+                <Text style={styles.addButtonText}>+</Text>
+              </TouchableOpacity>
+              <Text style={[styles.nameText, { maxWidth: itemSize }]}>Add</Text>
+            </View>
           ) : (
             <View
               key={`${it.personaId}-${i}`}

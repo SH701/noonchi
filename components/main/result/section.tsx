@@ -28,7 +28,8 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontFamily: 'Pretendard',
     lineHeight: 20.8,
-    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingLeft:6
   },
   content: {
     padding: 16,

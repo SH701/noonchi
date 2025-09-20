@@ -1,5 +1,6 @@
 import { slides } from "@/lib/setting";
 import { useRouter } from "expo-router";
+import LottieView from "lottie-react-native";
 import { useRef, useState } from "react";
 import {
   Dimensions,
@@ -76,7 +77,19 @@ export default function Onboard() {
                       <Text style={styles.skipButtonText}>Skip</Text>
                     </TouchableOpacity>
                   )}
-                  {slide.icon && <slide.icon />}
+                  {slide.icon && (
+                    <LottieView
+                      source={slide.icon}
+                      autoPlay
+                      loop
+                      style={{
+                        width: "100%",
+                        height: undefined,
+                        aspectRatio: 1,
+                        alignSelf: "center",
+                      }}
+                    />
+                  )}
                 </View>
 
                 <View style={styles.titleContainer}>
@@ -150,12 +163,12 @@ const styles = StyleSheet.create({
   },
   slideContent: {
     position: "relative",
-    height: 430,
     alignItems: "center",
     justifyContent: "center",
   },
   slideContentWithBg: {
-    backgroundColor: "#EFF6FF",
+    backgroundColor: "#DBEAFE",
+    paddingTop: 40,
   },
   skipButton: {
     position: "absolute",
@@ -168,22 +181,18 @@ const styles = StyleSheet.create({
     textDecorationLine: "underline",
     color: "#6b7280",
   },
-  slideImage: {
-    width: 300,
-    height: 295,
-  },
   titleContainer: {
     width: 274,
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 40,
     alignSelf: "center",
   },
   title: {
+    marginTop: 80,
     textAlign: "center",
     fontFamily: "Pretendard",
-    fontSize: 24,
+    fontSize: 25,
     fontWeight: "600",
     color: "#111827",
   },
@@ -202,7 +211,7 @@ const styles = StyleSheet.create({
   },
   description: {
     color: "#9CA3AF",
-    marginTop: 8,
+    marginTop: 16,
     fontSize: 14,
     lineHeight: 18,
     textAlign: "center",

@@ -1,14 +1,8 @@
 "use client";
-import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/UserContext";
 import { useRouter } from "expo-router";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-} from 'react-native';
+import { useEffect, useState } from "react";
+import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 type Feedback = {
   overallEvaluation: string;
@@ -23,11 +17,12 @@ export default function FeedbackSection({ id }: { id: number | string }) {
 
   useEffect(() => {
     if (!accessToken) return;
-    fetch(`/api/conversations/${id}/feedback`, {
+    fetch(`https://noonchi.ai.kr/api/conversations/${id}/feedback`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     })
       .then((res) => res.json())
-      .then((data) => setFeedback(data));
+      .then((data) => setFeedback(data))
+      .catch((err) => console.error("Feedback fetch error:", err));
   }, [id, accessToken]);
 
   if (!feedback) return null;
@@ -38,17 +33,20 @@ export default function FeedbackSection({ id }: { id: number | string }) {
 
   const handleDeleteChat = async (conversationId: string | number) => {
     try {
-      const res = await fetch(`/api/conversations/${conversationId}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
+      const res = await fetch(
+        `https://noonchi.ai.kr/api/conversations/${conversationId}`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
 
       if (!res.ok) {
         throw new Error("Failed to delete chat");
       }
     } catch (err) {
       console.error("Delete chat error:", err);
-      Alert.alert('Error', 'Failed to delete chat');
+      Alert.alert("Error", "Failed to delete chat");
     }
   };
 
@@ -57,7 +55,7 @@ export default function FeedbackSection({ id }: { id: number | string }) {
       <View style={styles.feedbackCard}>
         <Text style={styles.feedbackText}>{feedback.overallEvaluation}</Text>
       </View>
-      
+
       <View style={styles.scoresContainer}>
         <View style={styles.scoreItem}>
           <View style={styles.scoreHeader}>
@@ -68,7 +66,7 @@ export default function FeedbackSection({ id }: { id: number | string }) {
             <View
               style={[
                 styles.progressFill,
-                { width: `${feedback.politenessScore}%` }
+                { width: `${feedback.politenessScore}%` },
               ]}
             />
           </View>
@@ -83,7 +81,7 @@ export default function FeedbackSection({ id }: { id: number | string }) {
             <View
               style={[
                 styles.progressFill,
-                { width: `${feedback.naturalnessScore}%` }
+                { width: `${feedback.naturalnessScore}%` },
               ]}
             />
           </View>
@@ -91,10 +89,7 @@ export default function FeedbackSection({ id }: { id: number | string }) {
       </View>
 
       <View style={styles.buttonContainer}>
-        <TouchableOpacity
-          style={styles.viewButton}
-          onPress={viewfeedback}
-        >
+        <TouchableOpacity style={styles.viewButton} onPress={viewfeedback}>
           <Text style={styles.buttonText}>View Feedback</Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -111,20 +106,19 @@ export default function FeedbackSection({ id }: { id: number | string }) {
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 20,
-    paddingVertical: 10,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: "#F3F4F6",
   },
   feedbackCard: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     marginVertical: 10,
     padding: 20,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: "#E5E7EB",
   },
   feedbackText: {
     fontSize: 14,
-    color: '#374151',
+    color: "#374151",
   },
   scoresContainer: {
     gap: 8,
@@ -133,33 +127,33 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   scoreHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: 4,
   },
   scoreLabel: {
     fontSize: 14,
-    color: '#374151',
+    color: "#374151",
   },
   scoreValue: {
     fontSize: 14,
-    color: '#374151',
+    color: "#374151",
   },
   progressBar: {
-    width: '100%',
+    width: "100%",
     height: 8,
-    backgroundColor: '#dbeafe',
+    backgroundColor: "#dbeafe",
     borderRadius: 4,
   },
   progressFill: {
-    height: '100%',
-    backgroundColor: '#60a5fa',
+    height: "100%",
+    backgroundColor: "#60a5fa",
     borderRadius: 4,
   },
   buttonContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     gap: 16,
     marginTop: 24,
     paddingBottom: 8,
@@ -168,22 +162,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     minWidth: 120,
     height: 36,
-    backgroundColor: '#2563eb',
+    backgroundColor: "#2563eb",
     borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   deleteButton: {
     paddingHorizontal: 16,
     minWidth: 80,
     height: 36,
-    backgroundColor: '#d1d5db',
+    backgroundColor: "#d1d5db",
     borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   buttonText: {
     fontSize: 12,
-    color: 'white',
+    color: "white",
   },
 });

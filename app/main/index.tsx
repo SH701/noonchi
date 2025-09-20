@@ -3,7 +3,6 @@
 import Logo from "@/components/etc/Logo";
 import Slider from "@/components/main/slider";
 import { useAuth } from "@/lib/UserContext";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
@@ -89,22 +88,6 @@ export default function Main() {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity
-        style={{
-          position: "absolute",
-          top: 100,
-          right: 20,
-          backgroundColor: "red",
-          padding: 10,
-          zIndex: 999,
-        }}
-        onPress={async () => {
-          await AsyncStorage.clear();
-          router.replace("/login");
-        }}
-      >
-        <Text style={{ color: "white" }}>Clear Storage</Text>
-      </TouchableOpacity>
       <View style={styles.content}>
         <View style={styles.welcomeSection}>
           <View>

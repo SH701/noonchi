@@ -1,3 +1,4 @@
+import FeedbackSection from "@/components/bothistory/FeedbackSection";
 import PersonaSlider from "@/components/bothistory/PersonaSlider";
 import SearchBar from "@/components/bothistory/SearchBar";
 import PersonaDetailModal from "@/components/persona/PersonaDetailModal";
@@ -117,9 +118,7 @@ export default function ChatHistory() {
           value={searchValue}
           onChange={setSearchValue}
           isOpen={isSearchOpen}
-          onSubmit={() => {
-           
-          }}
+          onSubmit={() => {}}
           onToggle={() => setIsSearchOpen((prev) => !prev)}
         />
       </View>
@@ -274,7 +273,7 @@ export default function ChatHistory() {
           </TouchableOpacity>
         </View>
       ) : (
-        <ScrollView style={{ flex: 1 }}>
+        <ScrollView contentContainerStyle={{paddingBottom: 90 }}>
           {sortedHistory.map((chat) => {
             const isOpen = openChatId === chat.conversationId;
             return (
@@ -325,7 +324,7 @@ export default function ChatHistory() {
                 </View>
 
                 {/* 아래쪽 actions */}
-                {isOpen && (
+                {isOpen && chat.status === "ACTIVE" && (
                   <View style={styles.actions}>
                     <TouchableOpacity
                       onPress={() => handleOpenChat(chat.conversationId)}
@@ -343,6 +342,11 @@ export default function ChatHistory() {
                         Delete
                       </Text>
                     </TouchableOpacity>
+                  </View>
+                )}
+                {isOpen && chat.status === "ENDED" && (
+                  <View style={styles.actions}>
+                    <FeedbackSection id={chat.conversationId} />
                   </View>
                 )}
               </View>

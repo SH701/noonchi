@@ -40,7 +40,7 @@ const FACES = [
 ];
 
 export default function ProfilePage() {
-  const { accessToken } = useAuth();
+  const { accessToken, logout } = useAuth();
   const router = useRouter();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -75,14 +75,12 @@ export default function ProfilePage() {
 
   const handleLogout = async () => {
     try {
-      await fetch("https://noonchi.ai.kr/api/auth/logout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ refreshToken: "" }),
-      });
+      await fetch("https://noonchi.ai.kr/api/auth/logout", { method: "POST" });
     } catch (err) {
-      console.error("Logout failed:", err);
+      console.error("Logout API failed:", err);
     }
+
+    await logout();
     router.replace("/login");
   };
 
@@ -145,7 +143,7 @@ export default function ProfilePage() {
             <ChevronRightIcon
               size={20}
               color="#9CA3AF"
-              style={{ position: "absolute" ,right:-18,top:4}}
+              style={{ position: "absolute", right: -18, top: 4 }}
             />
           </TouchableOpacity>
         </View>

@@ -2,8 +2,16 @@
 
 import { MyAI } from "@/lib/types";
 import { useAuth } from "@/lib/UserContext";
-import { useState } from "react";
-import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Audio } from "expo-av";
+import { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import Svg, { Circle, Path } from "react-native-svg";
 import Language from "../../assets/etc/language.svg";
 import Volume from "../../assets/etc/volume_up.svg";
@@ -90,13 +98,16 @@ export default function MessageItem({
       }
       setLoading((prev) => ({ ...prev, [messageId]: true }));
 
-      const res = await fetch(`/api/messages/${messageId}/translate`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
+      const res = await fetch(
+        `https://noonchi.ai.kr/api/messages/${messageId}/translate`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
 
       if (!res.ok) throw new Error(`Translation API failed: ${res.status}`);
 
@@ -121,12 +132,15 @@ export default function MessageItem({
     try {
       if (!messageId) return; // ✅ messageId 없으면 실행 안 함
 
-      const res = await fetch(`/api/messages/${messageId}/tts`, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${accessToken ?? ""}`,
-        },
-      });
+      const res = await fetch(
+        `https://noonchi.ai.kr/api/messages/${messageId}/tts`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
 
       if (!res.ok) {
         throw new Error(`TTS 요청 실패: ${res.status}`);
@@ -134,9 +148,8 @@ export default function MessageItem({
 
       const audioUrl = await res.text();
 
-      const audio = new Audio(audioUrl);
-      audio.play();
-
+      const { sound } = await Audio.Sound.createAsync({ uri: audioUrl });
+      await sound.playAsync();
       return audioUrl;
     } catch (err) {
       console.error("handleTTS error:", err);
@@ -145,12 +158,27 @@ export default function MessageItem({
   const handleTTsClick = async (messageId: string) => {
     setLoadingTTS((prev) => ({ ...prev, [messageId]: true }));
     try {
-      await handleTTS(messageId);
+      const url = await handleTTS(messageId);
+      if (url) {
+      }
     } finally {
       setLoadingTTS((prev) => ({ ...prev, [messageId]: false }));
     }
   };
   const isLastMessage = m.messageId === m[m.length]?.messageId;
+  useEffect(() => {
+    const setAudioMode = async () => {
+      await Audio.setAudioModeAsync({
+        playsInSilentModeIOS: true,
+        allowsRecordingIOS: false,
+        staysActiveInBackground: false,
+        shouldDuckAndroid: true,
+        playThroughEarpieceAndroid: false,
+      });
+    };
+
+    setAudioMode();
+  }, []);
 
   return (
     <View
@@ -180,10 +208,15 @@ export default function MessageItem({
         <TouchableOpacity
           onPress={handleFeedbackClick}
           disabled={loadingFeedbacks[m.messageId]}
-          style={styles.feedbackButton}
+          style={[
+            styles.feedbackButton,
+            loadingFeedbacks[m.messageId] && {
+              borderWidth: 0,
+            },
+          ]}
         >
           {loadingFeedbacks[m.messageId] ? (
-            <SpinnerIcon size={12} color="#6b7280" />
+            <ActivityIndicator size="small" color="#f6573b" />
           ) : (
             <Text style={styles.feedbackButtonText}>i</Text>
           )}
@@ -229,7 +262,7 @@ export default function MessageItem({
                     style={styles.actionButton}
                   >
                     {loadingTTs[m.messageId] ? (
-                      <SpinnerIcon size={16} color="#6b7280" />
+                      <ActivityIndicator size="small" color="#3b82f6" />
                     ) : (
                       <Volume />
                     )}
@@ -239,7 +272,11 @@ export default function MessageItem({
                     disabled={loadingTranslate[m.messageId]}
                     style={styles.actionButton}
                   >
-                    <Language />
+                    {loadingTranslate[m.messageId] ? (
+                      <ActivityIndicator size="small" color="#3b82f6" />
+                    ) : (
+                      <Language />
+                    )}
                   </TouchableOpacity>
                 </View>
               </View>
@@ -252,9 +289,13 @@ export default function MessageItem({
                   style={styles.honorificButton}
                   onPress={handleClick}
                 >
-                  <Text style={styles.honorificButtonText}>
-                    Honorific Slider
-                  </Text>
+                  {loading[m.messageId] ? (
+                    <ActivityIndicator size="small" color="#121212" />
+                  ) : (
+                    <Text style={styles.honorificButtonText}>
+                      Honorific Slider
+                    </Text>
+                  )}
                 </TouchableOpacity>
               </View>
             )}
@@ -285,16 +326,6 @@ export default function MessageItem({
             <Text style={styles.errorText}>
               This message contains an error that needs attention.
             </Text>
-          </View>
-        )}
-
-        {/* 존댓말 로딩 */}
-        {loading[m.messageId] && (
-          <View style={styles.loadingBox}>
-            <View style={styles.loadingContent}>
-              <SpinnerIcon size={16} color="white" />
-              <Text style={styles.loadingText}>Loading...</Text>
-            </View>
           </View>
         )}
 

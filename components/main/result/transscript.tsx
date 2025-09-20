@@ -1,15 +1,24 @@
 "use client";
 
 import { useAuth } from "@/lib/UserContext";
-import { useState } from "react";
-import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Audio } from "expo-av";
+import { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import Language from "../../../assets/etc/language.svg";
+import Volume from "../../../assets/etc/volume_up.svg";
 import HonorificBox from "./honorificbox";
 
 type ChatMsg = {
   messageId: number;
   role: "USER" | "AI";
   content: string;
-  feedback?: string;
+  feedback?: { explain: string; appropriateExpression: string };
   politenessScore?: number;
   naturalnessScore?: number;
 };
@@ -22,32 +31,32 @@ export default function Transcript({
   aiName: string;
 }) {
   const { accessToken } = useAuth();
+
+  // 로딩 상태
+  const [loading, setLoading] = useState<Record<string, boolean>>({});
   const [sliderValue, setSliderValue] = useState<Record<string, number>>({});
-  const [translated, setTranslated] = useState<string | null>(null);
+  const [translated, setTranslated] = useState<Record<string, string | null>>(
+    {}
+  );
   const [feedbacks, setFeedbacks] = useState<
     Record<number, { explain: string; appropriateExpression: string }>
   >({});
   const [open, setOpen] = useState<number | null>(null);
-  const [openHonoricif, setOpenHonorific] = useState<number | null>(null);
+  const [openHonorific, setOpenHonorific] = useState<number | null>(null);
   const [honorificResults, setHonorificResults] = useState<Record<string, any>>(
     {}
   );
 
+  /** Feedback */
   const handleFeedback = async (messageId: string) => {
+    setLoading((prev) => ({ ...prev, [messageId]: true }));
     try {
-      const res = await fetch(`/api/messages/${messageId}/feedback`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-      if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(`Feedback API failed: ${res.status} - ${errorText}`);
-      }
-
+      const res = await fetch(
+        `https://noonchi.ai.kr/api/messages/${messageId}/feedback`,
+        { method: "POST", headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      if (!res.ok) throw new Error(`Feedback API failed: ${res.status}`);
       const feedbackData = await res.json();
-
       setFeedbacks((prev) => ({
         ...prev,
         [Number(messageId)]: {
@@ -55,223 +64,199 @@ export default function Transcript({
           appropriateExpression: feedbackData.appropriateExpression,
         },
       }));
-    } catch (error) {
-      console.error("피드백 처리 중 오류 발생:", error);
+    } catch (err) {
+      console.error("피드백 오류:", err);
+    } finally {
+      setLoading((prev) => ({ ...prev, [messageId]: false }));
     }
   };
 
+  /** Honorific */
   const handleHonorific = async (messageId: string) => {
+    setLoading((prev) => ({ ...prev, [messageId]: true }));
     try {
       const res = await fetch(
-        `/api/messages/${messageId}/honorific-variations`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
+        `https://noonchi.ai.kr/api/messages/${messageId}/honorific-variations`,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
       );
-
-      if (!res.ok) {
-        throw new Error(`Honorific API failed: ${res.status}`);
-      }
-
+      if (!res.ok) throw new Error(`Honorific API failed: ${res.status}`);
       const data = await res.json();
-      setHonorificResults((prev) => ({
-        ...prev,
-        [messageId]: data,
-      }));
-      setSliderValue((prev) => ({
-        ...prev,
-        [messageId]: 1,
-      }));
-    } catch (error) {
-      console.error("존댓말 처리 중 오류 발생:", error);
+      setHonorificResults((prev) => ({ ...prev, [messageId]: data }));
+      setSliderValue((prev) => ({ ...prev, [messageId]: 1 }));
+    } catch (err) {
+      console.error("존댓말 오류:", err);
+    } finally {
+      setLoading((prev) => ({ ...prev, [messageId]: false }));
     }
   };
 
+  /** Translate */
   const handleTranslate = async (messageId: string) => {
+    setLoading((prev) => ({ ...prev, [messageId]: true }));
     try {
-      if (translated) {
-        setTranslated(null);
+      if (translated[messageId]) {
+        setTranslated((prev) => ({ ...prev, [messageId]: null }));
         return;
       }
-
-      const res = await fetch(`/api/messages/${messageId}/translate`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-
-      if (!res.ok) throw new Error(`Translation API failed: ${res.status}`);
-
+      const res = await fetch(
+        `https://noonchi.ai.kr/api/messages/${messageId}/translate`,
+        { method: "PUT", headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      if (!res.ok) throw new Error(`Translate API failed: ${res.status}`);
       const data = await res.text();
-      setTranslated(data);
+      setTranslated((prev) => ({ ...prev, [messageId]: data }));
     } catch (err) {
-      console.error("Translation error:", err);
+      console.error("번역 오류:", err);
+    } finally {
+      setLoading((prev) => ({ ...prev, [messageId]: false }));
     }
   };
 
+  /** TTS */
   const handleTTS = async (messageId: string) => {
+    setLoading((prev) => ({ ...prev, [messageId]: true }));
     try {
-      if (!messageId) return;
-
-      const res = await fetch(`/api/messages/${messageId}/tts`, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-
-      if (!res.ok) {
-        throw new Error(`TTS 요청 실패: ${res.status}`);
-      }
-
+      const res = await fetch(
+        `https://noonchi.ai.kr/api/messages/${messageId}/tts`,
+        { method: "PUT", headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      if (!res.ok) throw new Error(`TTS API failed: ${res.status}`);
       const audioUrl = await res.text();
-
-      const audio = new Audio(audioUrl);
-      audio.play();
-
-      return audioUrl;
+      const { sound } = await Audio.Sound.createAsync({ uri: audioUrl });
+      await sound.playAsync();
     } catch (err) {
-      console.error("handleTTS error:", err);
+      console.error("TTS 오류:", err);
+    } finally {
+      setLoading((prev) => ({ ...prev, [messageId]: false }));
     }
   };
 
+  // i 버튼 조건
   const showFeedbackButton = (m: ChatMsg) => {
     if (m.role !== "USER") return false;
-    if (
-      m.politenessScore === undefined ||
-      m.naturalnessScore === undefined ||
-      m.politenessScore < 0 ||
-      m.naturalnessScore < 0
-    ) {
+    if ((m.politenessScore ?? -1) < 0 || (m.naturalnessScore ?? -1) < 0)
       return false;
-    }
-    const avg = (m.politenessScore + m.naturalnessScore) / 2;
+    const avg = (m.politenessScore! + m.naturalnessScore!) / 2;
     return avg <= 80;
   };
+
+  // iOS 무음 모드에서도 재생
+  useEffect(() => {
+    const init = async () => {
+      await Audio.setAudioModeAsync({ playsInSilentModeIOS: true });
+    };
+    init();
+  }, []);
 
   return (
     <View style={styles.container}>
       {messages.map((m) =>
         m.role === "AI" ? (
           <View key={m.messageId} style={styles.aiMessageContainer}>
-            {/* AI 메시지 스타일 */}
             <View style={styles.aiMessageBox}>
               <Text style={styles.aiName}>{aiName}</Text>
               <Text style={styles.aiContent}>{m.content}</Text>
               <View style={styles.aiActions}>
                 <TouchableOpacity
                   onPress={() => handleTTS(String(m.messageId))}
+                  disabled={loading[m.messageId]}
                   style={styles.actionButton}
                 >
-                  <Image
-                    source={require("../../../assets/etc/volume_up.svg")}
-                    style={styles.actionIcon}
-                    resizeMode="contain"
-                  />
+                  {loading[m.messageId] ? (
+                    <ActivityIndicator size="small" color="#3b82f6" />
+                  ) : (
+                    <Volume style={styles.actionIcon} />
+                  )}
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={() => handleTranslate(String(m.messageId))}
+                  disabled={loading[m.messageId]}
                   style={styles.actionButton}
                 >
-                  <Image
-                    source={require("../../../assets/etc/language.svg")}
-                    style={styles.actionIcon}
-                    resizeMode="contain"
-                  />
+                  {loading[m.messageId] ? (
+                    <ActivityIndicator size="small" color="#3b82f6" />
+                  ) : (
+                    <Language style={styles.actionIcon} />
+                  )}
                 </TouchableOpacity>
               </View>
             </View>
-            {translated && (
+            {translated[m.messageId] && (
               <View style={styles.translationBox}>
-                <Text style={styles.translationText}>{translated}</Text>
+                <Text style={styles.translationText}>
+                  {translated[m.messageId]}
+                </Text>
               </View>
-            )}
-            {openHonoricif === m.messageId && (
-              <HonorificBox
-                messageId={m.messageId}
-                honorificResults={honorificResults}
-                sliderValue={sliderValue}
-                setSliderValue={setSliderValue}
-                style={{ marginTop: -28 }}
-              />
             )}
           </View>
         ) : (
           <View key={m.messageId} style={styles.userMessageContainer}>
-            <View style={styles.userMessageWrapper}>
-              <View style={styles.userMessageRow}>
-                <View style={styles.feedbackButtonContainer}>
-                  {showFeedbackButton(m) && (
-                    <TouchableOpacity
-                      onPress={() => {
-                        handleFeedback(String(m.messageId));
-                        setOpen((prev) =>
-                          prev === m.messageId ? null : m.messageId
-                        );
-                      }}
-                      style={styles.feedbackButton}
-                    >
-                      <Text style={styles.feedbackButtonText}>i</Text>
-                    </TouchableOpacity>
+            <View style={styles.userMessageRow}>
+              {showFeedbackButton(m) && (
+                <TouchableOpacity
+                  onPress={() => {
+                    handleFeedback(String(m.messageId));
+                    setOpen((prev) =>
+                      prev === m.messageId ? null : m.messageId
+                    );
+                  }}
+                  disabled={loading[m.messageId]}
+                  style={[
+                    styles.feedbackButton,
+                    loading[m.messageId] && { borderWidth: 0 },
+                  ]}
+                >
+                  {loading[m.messageId] ? (
+                    <ActivityIndicator size="small" color="#ef4444" />
+                  ) : (
+                    <Text style={styles.feedbackButtonText}>i</Text>
                   )}
-                </View>
-                <View style={styles.userMessageContent}>
-                  <View
-                    style={[
-                      styles.userMessageBox,
-                      showFeedbackButton(m)
-                        ? styles.userMessageBoxWithFeedback
-                        : styles.userMessageBoxNormal,
-                    ]}
-                  >
-                    <Text style={styles.userContent}>{m.content}</Text>
-
-                    {/* Honorific Slider 버튼 */}
-                    <View style={styles.honorificButtonContainer}>
-                      <TouchableOpacity
-                        onPress={() => {
-                          handleHonorific(String(m.messageId));
-                          setOpenHonorific((prev) =>
-                            prev === m.messageId ? null : m.messageId
-                          );
-                        }}
-                        style={styles.honorificButton}
-                      >
+                </TouchableOpacity>
+              )}
+              <View style={styles.userMessageContent}>
+                <View
+                  style={[
+                    styles.userMessageBox,
+                    showFeedbackButton(m)
+                      ? styles.userMessageBoxWithFeedback
+                      : styles.userMessageBoxNormal,
+                  ]}
+                >
+                  <Text style={styles.userContent}>{m.content}</Text>
+                  <View style={styles.honorificButtonContainer}>
+                    <TouchableOpacity
+                      onPress={() => handleHonorific(String(m.messageId))}
+                      disabled={loading[m.messageId]}
+                      style={styles.honorificButton}
+                    >
+                      {loading[m.messageId] ? (
+                        <ActivityIndicator size="small" color="#fff" />
+                      ) : (
                         <Text style={styles.honorificButtonText}>
                           Honorific Slider
                         </Text>
-                      </TouchableOpacity>
-                    </View>
+                      )}
+                    </TouchableOpacity>
                   </View>
-
-                  {/* 피드백 표시 - 메시지 바로 아래 붙임 */}
-                  {open === m.messageId && (
-                    <View style={styles.feedbackBox}>
-                      <Text style={styles.appropriateExpression}>
-                        {feedbacks[m.messageId]?.appropriateExpression}
-                      </Text>
-                      <Text style={styles.feedbackExplain}>
-                        {feedbacks[m.messageId]?.explain}
-                      </Text>
-                    </View>
-                  )}
-
-                  {/* 존댓말 슬라이더 */}
-                  {openHonoricif === m.messageId && (
-                    <HonorificBox
-                      messageId={m.messageId}
-                      honorificResults={honorificResults}
-                      sliderValue={sliderValue}
-                      setSliderValue={setSliderValue}
-                    />
-                  )}
                 </View>
+                {open === m.messageId && (
+                  <View style={styles.feedbackBox}>
+                    <Text style={styles.appropriateExpression}>
+                      {feedbacks[m.messageId]?.appropriateExpression}
+                    </Text>
+                    <Text style={styles.feedbackExplain}>
+                      {feedbacks[m.messageId]?.explain}
+                    </Text>
+                  </View>
+                )}
+                {openHonorific === m.messageId && (
+                  <HonorificBox
+                    messageId={m.messageId}
+                    honorificResults={honorificResults}
+                    sliderValue={sliderValue}
+                    setSliderValue={setSliderValue}
+                  />
+                )}
               </View>
             </View>
           </View>
@@ -293,6 +278,8 @@ const styles = StyleSheet.create({
   aiMessageBox: {
     width: 240,
     backgroundColor: "#f9fafb",
+    marginVertical: 12,
+    marginHorizontal: 18,
     padding: 12,
     borderRadius: 12,
     shadowColor: "rgba(0,0,0,0.1)",
@@ -302,6 +289,7 @@ const styles = StyleSheet.create({
     elevation: 2,
     borderWidth: 1,
     borderColor: "#e5e7eb",
+
     zIndex: 20,
   },
   aiName: {
@@ -315,6 +303,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: "Pretendard",
     lineHeight: 20,
+
     color: "#111827",
   },
   aiActions: {
@@ -343,7 +332,8 @@ const styles = StyleSheet.create({
     width: 240,
     borderBottomLeftRadius: 12,
     borderBottomRightRadius: 12,
-    marginTop: -24,
+    marginTop: -40,
+    marginLeft: 18,
   },
   translationText: {
     color: "#e5e7eb",
@@ -353,6 +343,8 @@ const styles = StyleSheet.create({
   },
   userMessageContainer: {
     flexDirection: "column",
+    justifyContent: "flex-end",
+    alignItems: "flex-end",
     width: "100%",
   },
   userMessageWrapper: {
@@ -362,15 +354,10 @@ const styles = StyleSheet.create({
   },
   userMessageRow: {
     flexDirection: "row",
-    gap: 8,
-    width: 240,
-  },
-  feedbackButtonContainer: {
-    width: 18,
     alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
-    height: 74,
+    justifyContent: "flex-end",
+    gap: 8,
+    maxWidth: "80%",
   },
   feedbackButton: {
     width: 18,
@@ -379,11 +366,12 @@ const styles = StyleSheet.create({
     borderColor: "#ef4444",
     borderRadius: 9,
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "flex-end",
     shadowColor: "rgba(0,0,0,0.1)",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
+    marginLeft: 25,
     elevation: 2,
     backgroundColor: "transparent",
   },
@@ -399,6 +387,7 @@ const styles = StyleSheet.create({
   },
   userMessageBox: {
     backgroundColor: "white",
+    marginHorizontal: 18,
     padding: 12,
     borderRadius: 12,
     shadowColor: "rgba(0,0,0,0.1)",
@@ -408,6 +397,8 @@ const styles = StyleSheet.create({
     elevation: 2,
     borderWidth: 1,
     zIndex: 30,
+    width: 240,
+    alignSelf: "flex-end",
   },
   userMessageBoxNormal: {
     borderColor: "#e5e7eb",
@@ -425,15 +416,16 @@ const styles = StyleSheet.create({
     borderBottomColor: "#9ca3af",
   },
   honorificButtonContainer: {
+    alignItems: "flex-end",
     justifyContent: "flex-end",
     marginTop: 8,
   },
   honorificButton: {
     backgroundColor: "#2563eb",
-    paddingHorizontal: 8,
+    paddingHorizontal: 4,
     paddingVertical: 4,
-    marginTop: 12,
-    borderRadius: 4,
+    marginTop: 8,
+    borderRadius: 9999,
   },
   honorificButtonText: {
     color: "white",
@@ -449,8 +441,10 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
+    width: 239,
     elevation: 2,
     marginTop: -24,
+    marginLeft: 6,
   },
   appropriateExpression: {
     color: "white",
