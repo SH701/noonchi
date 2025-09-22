@@ -1,7 +1,8 @@
 "use client";
 
 import Logo from "@/components/etc/Logo";
-import Slider from "@/components/main/slider";
+
+import MainSlider from "@/components/main/mainslider";
 import { useAuth } from "@/lib/UserContext";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -118,7 +119,7 @@ export default function Main() {
 
         {/* 슬라이더 섹션 */}
         <View style={styles.sliderSection}>
-          <Slider />
+          <MainSlider category={"apology"} />
         </View>
       </View>
     </View>

@@ -59,9 +59,16 @@ export default function HonorificSlider({
         <Slider
           style={styles.slider}
           minimumValue={0}
-          maximumValue={2}
+          maximumValue={100} 
+          step={1} 
           value={value}
-          onValueChange={onChange}
+          onValueChange={(v) => {
+            let mappedValue = 0;
+            if (v <= 33) mappedValue = 0; 
+            else if (v <= 67) mappedValue = 1; 
+            else mappedValue = 2; 
+            onChange(mappedValue);
+          }}
           minimumTrackTintColor="#3b82f6"
           maximumTrackTintColor="#d1d5db"
           thumbTintColor="#2563eb"
@@ -98,7 +105,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.22,
     shadowRadius: 2.22,
     elevation: 3,
-    marginTop: -24,
+    marginTop: -20,
+    zIndex: -10,
   },
   resultText: {
     marginBottom: 12,
@@ -111,7 +119,8 @@ const styles = StyleSheet.create({
   },
   slider: {
     width: "100%",
-    height: 8,
+    height: 6,
+    marginVertical: 6,
   },
   thumb: {
     backgroundColor: "#3B82F6",

@@ -1,3 +1,4 @@
+import LoadingPage from "@/components/etc/Loading";
 import { useAuth } from "@/lib/UserContext";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -70,20 +71,16 @@ export default function LoginPage() {
   }, []);
 
   if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <Text>Loading...</Text>
-      </View>
-    );
+    return <LoadingPage />;
   }
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={{ flex: 1 }}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <ScrollView
-        style={styles.container}
+        style={{ flex: 1 }}
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}

@@ -1,6 +1,6 @@
 "use client";
-
-import { SetStateAction, useState } from "react";
+import Slider from "@react-native-community/slider";
+import { useState } from "react";
 import {
   Image,
   ScrollView,
@@ -10,6 +10,11 @@ import {
   View,
 } from "react-native";
 import Svg, { Path } from "react-native-svg";
+
+type Props = {
+  category: "ask_eat" | "ask_did_you_eat" | "apology";
+  steps?: number;
+};
 
 const ChevronDownIcon = ({ size = 20, color = "#6b7280" }) => (
   <Svg
@@ -45,82 +50,18 @@ const ChevronUpIcon = ({ size = 20, color = "#6b7280" }) => (
   </Svg>
 );
 
-const CustomSlider = ({
-  value,
-  onValueChange,
-  min = 0,
-  max = 2,
-}: {
-  value: number;
-  onValueChange: (value: number) => void;
-  min?: number;
-  max?: number;
-}) => {
-  const percent = (value / max) * 100;
-
-  return (
-    <View style={styles.sliderContainer}>
-      {/* 배경 트랙 */}
-      <View style={styles.sliderTrack} />
-
-      {/* 채워진 부분 */}
-      <View style={[styles.sliderFill, { width: `${percent}%` }]} />
-
-      {/* 눈금 점들 */}
-      {[0, 1, 2].map((step) => (
-        <View
-          key={step}
-          style={[
-            styles.sliderTick,
-            {
-              left: `${(step / max) * 100}%`,
-              marginLeft: step === 0 ? 4 : step === max ? -12 : -2,
-            },
-          ]}
-        />
-      ))}
-      <View
-        style={[
-          styles.sliderThumb,
-          {
-            left: `${percent}%`,
-            marginLeft: -14,
-          },
-        ]}
-      />
-
-      {/* 터치 영역 */}
-      <TouchableOpacity style={styles.sliderTouchArea} activeOpacity={1}>
-        {/* 3개의 터치 구역 */}
-        <TouchableOpacity
-          style={[styles.touchZone, { left: "0%" }]}
-          onPress={() => onValueChange(0)}
-          activeOpacity={0.7}
-        />
-        <TouchableOpacity
-          style={[styles.touchZone, { left: "33.33%" }]}
-          onPress={() => onValueChange(1)}
-          activeOpacity={0.7}
-        />
-        <TouchableOpacity
-          style={[styles.touchZone, { left: "66.66%" }]}
-          onPress={() => onValueChange(2)}
-          activeOpacity={0.7}
-        />
-      </TouchableOpacity>
-    </View>
-  );
-};
-
-export default function HonorificSlider({
-  category = "ask_eat",
-}: {
-  category?: "ask_eat" | "ask_did_you_eat" | "apology";
-}) {
+export default function MainSlider({ category, steps }: Props) {
   const [showex, setShowex] = useState(false);
   const [showInfo, setShowInfo] = useState(true);
-  const [level, setLevel] = useState(1); // intimacy
-  const [fam, setFam] = useState(1); // formality
+  const [intimacy, setIntimacy] = useState<number>(50);
+  const [formality, setFormality] = useState<number>(50);
+
+  const getStep = (value: number): 0 | 1 | 2 => {
+    if (value <= 33) return 0;
+    if (value <= 67) return 1;
+    return 2;
+  };
+
   const expressions = {
     ask_eat: [
       [
@@ -289,15 +230,27 @@ export default function HonorificSlider({
     ],
   } as const;
 
-  const currentSentence = expressions[category][level][fam];
+  const currentSentence =
+    expressions[category][getStep(intimacy)][getStep(formality)];
 
+  const renderMarks = () => {
+    return [0, 50, 100].map((pos, i) => (
+      <View
+        key={i}
+        style={[
+          styles.mark,
+          { left: `${pos}%`, marginLeft: i === 0 ? 3 : i === 3 ? -12 : -12 },
+        ]}
+      />
+    ));
+  };
   return (
     <ScrollView
       style={styles.container}
       contentContainerStyle={{ alignItems: "center", paddingBottom: 160 }}
       scrollEnabled={showex}
-      bounces={false} 
-      alwaysBounceVertical={false} 
+      bounces={false}
+      alwaysBounceVertical={false}
     >
       <Text style={styles.title}>Today`s honorific expression</Text>
 
@@ -320,7 +273,6 @@ export default function HonorificSlider({
         </View>
       )}
 
-      {/* tip 이미지 (슬라이드하면 사라짐) */}
       {showInfo && (
         <Image
           source={require("../../assets/etc/tip.png")}
@@ -332,13 +284,25 @@ export default function HonorificSlider({
       {/* Intimacy Slider */}
       <View style={styles.sliderBox}>
         <Text style={styles.sliderTitle}>Intimacy Level</Text>
-        <CustomSlider
-          value={level}
-          onValueChange={(val: SetStateAction<number>) => {
-            setLevel(val);
-            if (showInfo) setShowInfo(false);
-          }}
-        />
+        <View style={styles.trackContainer}>
+          <View style={styles.trackBg} />
+          <View style={[styles.trackFill, { width: `${intimacy}%` }]} />
+          {renderMarks()}
+          <Slider
+            value={intimacy}
+            minimumValue={0}
+            maximumValue={100}
+            step={1}
+            style={styles.slider}
+            minimumTrackTintColor="transparent"
+            maximumTrackTintColor="transparent"
+            thumbTintColor="#fff"
+            onValueChange={(val) => {
+              setIntimacy(val);
+              setShowInfo(false);
+            }}
+          />
+        </View>
         <View style={styles.sliderLabels}>
           <Text style={styles.labelText}>Close</Text>
           <Text style={styles.labelText}>Distant</Text>
@@ -348,13 +312,25 @@ export default function HonorificSlider({
       {/* Formality Slider */}
       <View style={styles.sliderBox}>
         <Text style={styles.sliderTitle}>Formality Level</Text>
-        <CustomSlider
-          value={fam}
-          onValueChange={(val: SetStateAction<number>) => {
-            setFam(val);
-            if (showInfo) setShowInfo(false);
-          }}
-        />
+        <View style={styles.trackContainer}>
+          <View style={styles.trackBg} />
+          <View style={[styles.trackFill, { width: `${formality}%` }]} />
+          {renderMarks()}
+          <Slider
+            value={formality}
+            minimumValue={0}
+            maximumValue={100}
+            step={1}
+            minimumTrackTintColor="transparent"
+            maximumTrackTintColor="transparent"
+            thumbTintColor="#fff"
+            style={styles.slider}
+            onValueChange={(val) => {
+              setFormality(val);
+              setShowInfo(false);
+            }}
+          />
+        </View>
         <View style={styles.sliderLabels}>
           <Text style={styles.labelText}>Low</Text>
           <Text style={styles.labelText}>High</Text>
@@ -371,10 +347,7 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
     paddingBottom: 24,
   },
-  title: {
-    fontSize: 16,
-    marginTop: 16,
-  },
+  title: { fontSize: 16, marginTop: 16 },
   sentenceContainer: {
     width: "90%",
     backgroundColor: "#f3f4f6",
@@ -387,16 +360,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     position: "relative",
   },
-  phraseText: {
-    fontWeight: "600",
-    fontSize: 16,
-    textAlign: "center",
-  },
-  toggleButton: {
-    position: "absolute",
-    right: 8,
-    top: 12,
-  },
+  phraseText: { fontWeight: "600", fontSize: 16, textAlign: "center" },
+  toggleButton: { position: "absolute", right: 8, top: 12 },
   explanationContainer: {
     width: "90%",
     padding: 12,
@@ -407,89 +372,54 @@ const styles = StyleSheet.create({
     backgroundColor: "#f3f4f6",
     alignItems: "center",
   },
-  explanationText: {
-    color: "#374151",
-    textAlign: "center",
-    fontSize: 13,
-  },
-  tipImage: {
-    width: 266,
-    height: 33,
-    marginTop: 12,
-  },
-  sliderBox: {
-    width: "90%",
-    marginTop: 6,
-  },
+  explanationText: { color: "#374151", textAlign: "center", fontSize: 13 },
+  tipImage: { width: 266, height: 33, marginTop: 12 },
+  sliderBox: { width: "90%", marginTop: 12 },
   sliderTitle: {
     fontSize: 16,
     fontWeight: "500",
     color: "#374151",
-    marginBottom: 8,
-  },
-  sliderContainer: {
-    height: 16,
-    position: "relative",
-    marginVertical: 12,
-  },
-  sliderTrack: {
-    position: "absolute",
-    width: "100%",
-    height: 16,
-    backgroundColor: "#e5e7eb",
-    borderRadius: 8,
-  },
-  sliderFill: {
-    position: "absolute",
-    height: 16,
-    backgroundColor: "#3b82f6",
-    borderRadius: 8,
-  },
-  sliderTick: {
-    position: "absolute",
-    width: 8,
-    height: 8,
-    backgroundColor: "#D0DCEE",
-    borderRadius: 4,
-    top: 4,
-    zIndex: 10,
-  },
-  sliderThumb: {
-    position: "absolute",
-    width: 28,
-    height: 28,
-    backgroundColor: "white",
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "#000",
-    top: -6, // 트랙 중앙에 위치
-    marginLeft: -14, // 썸의 중앙을 기준점으로
-    shadowColor: "#3b82f6",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 4,
-    zIndex: 20,
-  },
-  sliderTouchArea: {
-    position: "absolute",
-    width: "100%",
-    height: 40, // 터치 영역을 더 크게
-    top: -12,
-    flexDirection: "row",
-  },
-  touchZone: {
-    position: "absolute",
-    width: "33.33%",
-    height: "100%",
+    marginBottom: 12,
   },
   sliderLabels: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginVertical: 4,
   },
-  labelText: {
-    fontSize: 12,
-    color: "#6b7280",
+  labelText: { fontSize: 12, color: "#6b7280" },
+  mark: {
+    position: "absolute",
+    top: "50%",
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#d3e0f5",
+    transform: [{ translateY: -4 }],
+  },
+  trackContainer: {
+    height: 16,
+    borderRadius: 8,
+    marginBottom: 12,
+    justifyContent: "center",
+  },
+  trackBg: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    height: 16,
+    backgroundColor: "#e5e7eb",
+    borderRadius: 8,
+  },
+  trackFill: {
+    position: "absolute",
+    left: 0,
+    height: 16,
+    backgroundColor: "#2563eb",
+    borderRadius: 8,
+  },
+  slider: {
+    width: "106%",
+    height: 40,
+    marginLeft: -12,
   },
 });

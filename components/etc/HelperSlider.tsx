@@ -1,7 +1,9 @@
-import React, { useRef, useState } from "react";
-import { PanResponder, Pressable, StyleSheet, Text, View } from "react-native";
+import Slider from "@react-native-community/slider";
+import React, { useEffect, useState } from "react";
+import { StyleSheet, Text, View } from "react-native";
 
 type Props = {
+  steps?: number;
   onChange: (
     intimacy:
       | "closeIntimacyExpressions"
@@ -11,13 +13,9 @@ type Props = {
   ) => void;
 };
 
-export default function HelperSlider({ onChange }: Props) {
-  const [level, setLevel] = useState(1);
-  const [fam, setFam] = useState(1);
-
-  const max = 2;
-  const sliderWidth = 280; // 실제 트랙 너비
-  const thumbSize = 28;
+export default function HelperSlider({ onChange, steps = 3}: Props) {
+  const [level, setLevel] = useState(0.5); // intimacy 0~1
+  const [fam, setFam] = useState(0.5); // formality 0~1
 
   const intimacyMap = [
     "closeIntimacyExpressions",
@@ -31,112 +29,104 @@ export default function HelperSlider({ onChange }: Props) {
     "highFormality",
   ] as const;
 
-  const handleUpdate = (newLevel: number, newFam: number) => {
-    onChange(intimacyMap[newLevel], formalityMap[newFam]);
+  const getStepValue = (percent: number) => {
+    const value = percent * 100;
+    if (steps === 3) {
+      if (value <= 33) return 0;
+      if (value <= 67) return 1;
+      return 2;
+    }
+    const stepSize = 100 / steps;
+    return Math.min(steps - 1, Math.floor(value / stepSize));
   };
 
-  // 공통 PanResponder
-  const createResponder = (
-    type: "intimacy" | "formality",
-    value: number,
-    setValue: React.Dispatch<React.SetStateAction<number>>
-  ) =>
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onPanResponderMove: (_, gesture) => {
-        let newX = Math.min(Math.max(0, gesture.moveX - 40), sliderWidth);
-        const newValue = Math.round((newX / sliderWidth) * max);
-        if (newValue !== value) {
-          setValue(newValue);
-          if (type === "intimacy") handleUpdate(newValue, fam);
-          else handleUpdate(level, newValue);
-        }
-      },
+  const handleUpdate = (intimacyPercent: number, formalityPercent: number) => {
+    const stepLevel = getStepValue(intimacyPercent);
+    const stepFam = getStepValue(formalityPercent);
+    onChange(intimacyMap[stepLevel], formalityMap[stepFam]);
+  };
+
+  useEffect(() => {
+    handleUpdate(level, fam);
+  }, []);
+  const renderMarks = () => {
+    return Array.from({ length: steps }, (_, i) => {
+      const pos = (i / (steps - 1)) * 100;
+      let offset = -4; // 기본 중앙 정렬
+
+      if (i === 0) offset = 4; // 왼쪽 tick은 오른쪽으로 밀기
+      if (i === steps - 1) offset = -12; // 오른쪽 tick은 왼쪽으로 당기기
+
+      return (
+        <View
+          key={i}
+          style={[styles.mark, { left: `${pos}%`, marginLeft: offset }]}
+        />
+      );
     });
-
-  const intimacyResponder = useRef(
-    createResponder("intimacy", level, setLevel)
-  ).current;
-  const formalityResponder = useRef(
-    createResponder("formality", fam, setFam)
-  ).current;
-
+  };
   return (
     <View style={styles.wrapper}>
       <View style={styles.card}>
         {/* Intimacy */}
         <View style={styles.sectionBlue}>
           <Text style={styles.sectionTitle}>Intimacy Level</Text>
-          <View style={styles.track}>
+          <View style={styles.trackContainer}>
             <View style={styles.trackBg} />
-            <View
-              style={[styles.trackFill, { width: (level / max) * sliderWidth }]}
+            <View style={[styles.trackFill, { width: `${level * 100}%` }]} />
+            {renderMarks()}
+            <Slider
+              value={ level}
+              minimumValue={0}
+              maximumValue={1}
+              step={0.01}
+              style={styles.slider}
+              minimumTrackTintColor="transparent"
+              maximumTrackTintColor="transparent"
+              thumbTintColor="#fff"
+              onValueChange={setLevel}
+              onSlidingComplete={(v) => {
+                const step = getStepValue(v);
+                const snap = step / (steps - 1);
+                setLevel(snap);
+                handleUpdate(snap, fam);
+              }}
             />
-            <View
-              {...intimacyResponder.panHandlers}
-              style={[
-                styles.thumb,
-                { left: (level / max) * sliderWidth - thumbSize / 2 },
-              ]}
-            />
-            {[0, 1, 2].map((i) => (
-              <Pressable
-                key={`intimacy-${i}`}
-                style={[
-                  styles.tick,
-                  {
-                    left: `${(i / max) * 100}%`,
-                    marginLeft: i === 0 ? 4 : i === max ? -12 : -2,
-                  },
-                ]}
-                onPress={() => {
-                  setLevel(i);
-                  handleUpdate(i, fam);
-                }}
-              />
-            ))}
           </View>
           <View style={styles.labelRow}>
-            <Text style={styles.labelText}>Close</Text>
-            <Text style={styles.labelText}>Distant</Text>
+            <Text style={styles.labelText}>⬇️ Close</Text>
+            <Text style={styles.labelText}>Distant ⬆️</Text>
           </View>
         </View>
 
         {/* Formality */}
         <View style={styles.sectionBlue}>
           <Text style={styles.sectionTitle}>Formality Level</Text>
-          <View style={styles.track}>
+          <View style={styles.trackContainer}>
             <View style={styles.trackBg} />
-            <View
-              style={[styles.trackFill, { width: (fam / max) * sliderWidth }]}
+            <View style={[styles.trackFill, { width: `${fam * 100}%` }]} />
+            {renderMarks()}
+            <Slider
+              value={fam}
+              minimumValue={0}
+              maximumValue={1}
+              step={0.01}
+              style={styles.slider}
+              minimumTrackTintColor="transparent"
+              maximumTrackTintColor="transparent"
+              thumbTintColor="#fff"
+              onValueChange={setLevel}
+              onSlidingComplete={(v) => {
+                const step = getStepValue(v);
+                const snap = step / (steps - 1);
+                setFam(snap);
+                handleUpdate(level, snap);
+              }}
             />
-            <View
-              {...formalityResponder.panHandlers}
-              style={[
-                styles.thumb,
-                { left: (fam / max) * sliderWidth - thumbSize / 2 },
-              ]}
-            />
-            {[0, 1, 2].map((i) => (
-              <Pressable
-                key={`fam-${i}`}
-                style={[
-                  styles.tick,
-                  {
-                    left: `${(i / max) * 100}%`,
-                    marginLeft: i === 0 ? 4 : i === max ? -12 : -2,
-                  },
-                ]}
-                onPress={() => {
-                  setFam(i);
-                  handleUpdate(level, i);
-                }}
-              />
-            ))}
           </View>
           <View style={styles.labelRow}>
-            <Text style={styles.labelText}>Low</Text>
-            <Text style={styles.labelText}>High</Text>
+            <Text style={styles.labelText}>⬇️ Low</Text>
+            <Text style={styles.labelText}>High ⬆️</Text>
           </View>
         </View>
       </View>
@@ -165,7 +155,7 @@ const styles = StyleSheet.create({
     color: "#374151",
     marginBottom: 12,
   },
-  track: {
+  trackContainer: {
     height: 16,
     borderRadius: 8,
     marginBottom: 12,
@@ -186,29 +176,23 @@ const styles = StyleSheet.create({
     backgroundColor: "#2563eb",
     borderRadius: 8,
   },
-  thumb: {
+  mark: {
     position: "absolute",
     top: "50%",
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: "white",
-    borderWidth: 2,
-    borderColor: "#2563eb",
-    transform: [{ translateY: -14 }],
-    zIndex: 10,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#d3e0f5",
+    transform: [{ translateY: -4 }],
   },
-  tick: {
-    position: "absolute",
-    top: "50%",
-    width: 20, // ✅ 터치영역 크게
+  slider: {
+    width: "100%",
     height: 40,
-    backgroundColor: "transparent", // 안 보이게
-    transform: [{ translateY: -20 }],
   },
   labelRow: {
     flexDirection: "row",
     justifyContent: "space-between",
+    marginTop: 12,
   },
   labelText: {
     fontSize: 12,

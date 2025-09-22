@@ -86,6 +86,7 @@ export default function HonorificHelper() {
       setLoading(false);
     }
   };
+
   const handleTTS = async () => {
     try {
       if (!result) return;
@@ -109,6 +110,7 @@ export default function HonorificHelper() {
       console.error("TTS 에러:", e);
     }
   };
+
   const handleSTT = async (url: string) => {
     const res = await fetch("https://noonchi.ai.kr/api/language/stt", {
       method: "POST",
@@ -124,6 +126,7 @@ export default function HonorificHelper() {
     const text = await res.text();
     setSource(text);
   };
+
   const handleMicClick = async () => {
     try {
       if (isRecording) {
@@ -175,11 +178,20 @@ export default function HonorificHelper() {
     }
   };
 
-  useEffect(() => {
-    if (result) handleTTS();
-  }, [result]);
+  // 슬라이더 변경 처리 - 자동 TTS 제거하고 수동으로만 실행
+  const handleSliderChange = (
+    newIntimacy: typeof intimacy,
+    newFormality: typeof formality
+  ) => {
+    setIntimacy(newIntimacy);
+    setFormality(newFormality);
 
-  // ✅ 오디오 모드 기본 세팅 (TTS 재생)
+    if (allResults) {
+      const selected = allResults[newIntimacy]?.[newFormality] ?? "결과 없음";
+      console.log("📄 Selected result:", selected);
+      setResult(selected);
+    }
+  };
   useEffect(() => {
     (async () => {
       await Audio.setAudioModeAsync({
@@ -261,17 +273,10 @@ export default function HonorificHelper() {
               </View>
             )}
           </View>
-          <View style={{ marginTop: 12, marginHorizontal: -16 ,marginBottom:-16}}>
-            <HelperSlider
-              onChange={(i, f) => {
-                setIntimacy(i);
-                setFormality(f);
-                if (allResults) {
-                  const selected = allResults[i]?.[f] ?? "결과 없음";
-                  setResult(selected);
-                }
-              }}
-            />
+          <View
+            style={{ marginTop: 12, marginHorizontal: -16, marginBottom: -16 }}
+          >
+            <HelperSlider steps={3} onChange={handleSliderChange} />
           </View>
         </View>
 

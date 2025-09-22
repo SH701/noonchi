@@ -34,7 +34,7 @@ type Filter = "done" | "in-progress";
 export default function ChatHistory() {
   const router = useRouter();
   const { accessToken } = useAuth();
-
+  const [personas, setPersonas] = useState<any[]>();
   const [history, setHistory] = useState<Conversation[]>([]);
   const [sort, setSort] = useState<"asc" | "desc">("desc");
   const [open, setOpen] = useState(false);
@@ -145,6 +145,9 @@ export default function ChatHistory() {
         onDeleted={(deletedId) => {
           setHistory((prev) =>
             prev.filter((c) => c.aiPersona?.personaId !== deletedId)
+          );
+          setPersonas((prev) =>
+            (prev ?? []).filter((p) => p.personas?.personaId !== deletedId)
           );
           setOpenDetail(false);
         }}
@@ -273,7 +276,7 @@ export default function ChatHistory() {
           </TouchableOpacity>
         </View>
       ) : (
-        <ScrollView contentContainerStyle={{paddingBottom: 90 }}>
+        <ScrollView contentContainerStyle={{ paddingBottom: 90 }}>
           {sortedHistory.map((chat) => {
             const isOpen = openChatId === chat.conversationId;
             return (
@@ -368,7 +371,12 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   headerTitle: { fontSize: 20, fontWeight: "bold" },
-  center: { flex: 1, justifyContent: "center", alignItems: "center" },
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 100,
+  },
   chatItem: {
     flexDirection: "column", // 세로 정렬
     borderBottomWidth: 1,

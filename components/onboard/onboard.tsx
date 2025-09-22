@@ -122,7 +122,6 @@ export default function Onboard() {
               {currentSlide === slides.length - 1 ? "Continue" : "Next"}
             </Text>
           </TouchableOpacity>
-
           <View style={styles.loginContainer}>
             <Text style={styles.loginText}>Already have an account? </Text>
             <TouchableOpacity onPress={() => router.push("/(auth)/login")}>

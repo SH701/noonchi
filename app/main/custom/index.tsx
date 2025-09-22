@@ -1,3 +1,4 @@
+import ChatLoading from "@/components/etc/ChatLoading";
 import { useAuth } from "@/lib/UserContext";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
@@ -22,6 +23,9 @@ const avatarPresets = [
   require("../../../assets/avatars/avatar4.png"),
   require("../../../assets/avatars/avatar5.png"),
   require("../../../assets/avatars/avatar6.png"),
+  require("../../../assets/characters/character1.png"),
+  require("../../../assets/characters/character2.png"),
+  require("../../../assets/characters/character3.png"),
 ];
 const situationOptions = {
   BOSS: [
@@ -52,6 +56,7 @@ export default function PersonaAndRoom() {
   );
   const [profileImageUrl, setProfileImageUrl] = useState<string>("");
   const [showAvatarModal, setShowAvatarModal] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   // 역할 변경되면 첫 상황 선택
   useEffect(() => {
@@ -100,6 +105,7 @@ export default function PersonaAndRoom() {
 
   const handleSubmit = async () => {
     try {
+      setLoading(true);
       const safeName = name.trim() === "" ? "Noonchi" : name;
       const safeProfileImage =
         profileImageUrl || "https://noonchi.ai.kr/default-avatar.png";
@@ -139,9 +145,13 @@ export default function PersonaAndRoom() {
       router.push(`/main/custom/chatroom/${convo.conversationId}` as any);
     } catch (err) {
       Alert.alert("생성 실패", String(err));
+    } finally {
+      setLoading(false);
     }
   };
-
+  if (loading) {
+    return <ChatLoading />;
+  }
   return (
     <ScrollView contentContainerStyle={styles.container} scrollEnabled={false}>
       <View style={styles.header}>
@@ -164,7 +174,9 @@ export default function PersonaAndRoom() {
         {profileImageUrl ? (
           <Image source={{ uri: profileImageUrl }} style={styles.avatar} />
         ) : (
-          <Text style={{ color: "#9ca3af" }}>+</Text>
+          <Image
+            source={require("../../../assets/characters/character2.png")}
+          />
         )}
       </TouchableOpacity>
       {showAvatarModal && (
@@ -184,7 +196,7 @@ export default function PersonaAndRoom() {
                     setShowAvatarModal(false);
                   }}
                   style={{
-                    flexBasis: "33.33%", // ✅ 한 줄에 3칸
+                    flexBasis: "33.33%",
                     alignItems: "center",
                     marginBottom: 12,
                   }}
@@ -219,7 +231,7 @@ export default function PersonaAndRoom() {
         </View>
       )}
 
-      {/* Name */}
+      <Text style={styles.des}>Name</Text>
       <TextInput
         value={name}
         onChangeText={setName}
@@ -227,7 +239,7 @@ export default function PersonaAndRoom() {
         style={styles.input}
       />
 
-      {/* Gender 선택 */}
+      <Text style={styles.des}>Gender</Text>
       <View style={styles.row}>
         {["MALE", "FEMALE", "NONE"].map((v) => (
           <TouchableOpacity
@@ -240,9 +252,9 @@ export default function PersonaAndRoom() {
         ))}
       </View>
 
-      {/* Role 선택 */}
+      <Text style={styles.des}>AI`s role</Text>
       <View>
-        {(["BOSS", "GF_PARENTS", "CLERK"] as Role[]).map((role) => (
+        {(["BOSS", "Girlfriend`s PARENTS", "CLERK"] as Role[]).map((role) => (
           <TouchableOpacity
             key={role}
             onPress={() => setRelationship(role)}
@@ -258,7 +270,7 @@ export default function PersonaAndRoom() {
         ))}
       </View>
 
-      {/* Situation 선택 */}
+      <Text style={{ marginTop: 10, marginBottom: 6 }}>Situation</Text>
       <View>
         {situationOptions[relationship].map(({ value, label }) => (
           <TouchableOpacity
@@ -285,7 +297,7 @@ export default function PersonaAndRoom() {
 }
 
 const styles = StyleSheet.create({
-  container: { paddingHorizontal: 16, paddingTop: 50, paddingBottom: 100 },
+  container: { paddingHorizontal: 16, paddingTop: 40, paddingBottom: 100 },
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -327,18 +339,18 @@ const styles = StyleSheet.create({
     borderColor: "#d1d5db",
     padding: 12,
     borderRadius: 8,
-    marginBottom: 20,
+    marginBottom: 15,
   },
-  row: { flexDirection: "row", gap: 8, marginBottom: 20 },
+  row: { flexDirection: "row", gap: 8, marginBottom: 10 },
   option: {
     flex: 1,
     borderWidth: 1,
     borderColor: "#d1d5db",
     paddingHorizontal: 8,
-    paddingVertical: 12,
+    paddingVertical: 10,
     borderRadius: 8,
     alignItems: "center",
-    marginBottom: 14,
+    marginBottom: 10,
   },
   optionSelected: {
     borderColor: "#3b82f6",
@@ -349,7 +361,7 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   submitBtn: {
-    marginTop: 20,
+    marginTop: 10,
     backgroundColor: "#3b82f6",
     padding: 16,
     borderRadius: 8,
@@ -360,7 +372,7 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    bottom: 0,
+    bottom: 40,
     backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "center",
     alignItems: "center",
@@ -369,7 +381,7 @@ const styles = StyleSheet.create({
   },
   modalBox: {
     width: "80%",
-    height: "40%",
+    height: "50%",
     backgroundColor: "white",
     borderRadius: 12,
     padding: 20,
@@ -383,5 +395,9 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: 8,
+  },
+  des: {
+    marginBottom: 6,
+    marginLeft: 2,
   },
 });
