@@ -178,7 +178,6 @@ export default function HonorificHelper() {
     }
   };
 
-  // 슬라이더 변경 처리 - 자동 TTS 제거하고 수동으로만 실행
   const handleSliderChange = (
     newIntimacy: typeof intimacy,
     newFormality: typeof formality

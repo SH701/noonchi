@@ -87,12 +87,22 @@ export default function ChatHistory() {
   }, [accessToken, selectedFilter]);
 
   const sortedHistory = useMemo(() => {
-    return [...history].sort((a, b) => {
+    let result = [...history];
+    if (searchValue.trim()) {
+      const lower = searchValue.toLowerCase();
+      result = result.filter(
+        (c) =>
+          c.aiPersona?.name?.toLowerCase().includes(lower) ||
+          c.situation?.toLowerCase().includes(lower) ||
+          c.aiPersona?.description?.toLowerCase().includes(lower)
+      );
+    }
+    return result.sort((a, b) => {
       const dateA = new Date(a.createdAt).getTime();
       const dateB = new Date(b.createdAt).getTime();
       return sort === "asc" ? dateA - dateB : dateB - dateA;
     });
-  }, [history, sort]);
+  }, [history, sort, searchValue]);
 
   const handleOpenChat = (id: string | number) => {
     router.push(`/main/custom/chatroom/${id}`);
@@ -121,7 +131,6 @@ export default function ChatHistory() {
           value={searchValue}
           onChange={setSearchValue}
           isOpen={isSearchOpen}
-          onSubmit={() => {}}
           onToggle={() => setIsSearchOpen((prev) => !prev)}
         />
       </View>

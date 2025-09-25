@@ -10,6 +10,8 @@ import {
   View,
 } from "react-native";
 import Svg, { Path } from "react-native-svg";
+import Down from "../../assets/etc/down.svg";
+import Up from "../../assets/etc/up.svg";
 
 type Props = {
   category: "ask_eat" | "ask_did_you_eat" | "apology";
@@ -304,8 +306,14 @@ export default function MainSlider({ category, steps }: Props) {
           />
         </View>
         <View style={styles.sliderLabels}>
-          <Text style={styles.labelText}>Close</Text>
-          <Text style={styles.labelText}>Distant</Text>
+          <View style={{ flexDirection: "row", gap: 3 }}>
+            <Down />
+            <Text style={styles.labelText}> Low</Text>
+          </View>
+          <View style={{ flexDirection: "row", gap: 3 }}>
+            <Text style={styles.labelText}>Distant</Text>
+            <Up />
+          </View>
         </View>
       </View>
 
@@ -332,8 +340,14 @@ export default function MainSlider({ category, steps }: Props) {
           />
         </View>
         <View style={styles.sliderLabels}>
-          <Text style={styles.labelText}>Low</Text>
-          <Text style={styles.labelText}>High</Text>
+          <View style={{ flexDirection: "row", gap: 3 }}>
+            <Down />
+            <Text style={styles.labelText}>Low</Text>
+          </View>
+          <View style={{ flexDirection: "row", gap: 3 }}>
+            <Text style={styles.labelText}>High</Text>
+            <Up />
+          </View>
         </View>
       </View>
     </ScrollView>

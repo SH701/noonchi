@@ -13,7 +13,7 @@ import Svg, { Path } from "react-native-svg";
 type Props = {
   value: string;
   onChange: (v: string) => void;
-  onSubmit?: () => void;
+  onSubmit?: (v: string) => void;
   isOpen: boolean;
   onToggle: () => void;
   placeholder?: string;
@@ -62,6 +62,7 @@ export default function SearchBar({
   // 열릴 때 자동 포커스
   useEffect(() => {
     if (isOpen) {
+      onChange("");
       Animated.parallel([
         Animated.timing(animatedWidth, {
           toValue: screenWidth * 0.4,
@@ -108,10 +109,10 @@ export default function SearchBar({
           ref={inputRef}
           value={value}
           onChangeText={onChange}
-          onSubmitEditing={onSubmit}
           style={styles.input}
           placeholder={placeholder}
           placeholderTextColor="#9ca3af"
+          onSubmitEditing={(e) => onSubmit?.(e.nativeEvent.text)}
           accessibilityLabel="search"
         />
         {/* 입력값 지우기 */}

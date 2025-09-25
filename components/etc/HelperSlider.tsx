@@ -1,7 +1,8 @@
 import Slider from "@react-native-community/slider";
 import React, { useEffect, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
-
+import Down from "../../assets/etc/down.svg";
+import Up from "../../assets/etc/up.svg";
 type Props = {
   steps?: number;
   onChange: (
@@ -13,7 +14,7 @@ type Props = {
   ) => void;
 };
 
-export default function HelperSlider({ onChange, steps = 3}: Props) {
+export default function HelperSlider({ onChange, steps = 3 }: Props) {
   const [level, setLevel] = useState(0.5); // intimacy 0~1
   const [fam, setFam] = useState(0.5); // formality 0~1
 
@@ -76,7 +77,7 @@ export default function HelperSlider({ onChange, steps = 3}: Props) {
             <View style={[styles.trackFill, { width: `${level * 100}%` }]} />
             {renderMarks()}
             <Slider
-              value={ level}
+              value={level}
               minimumValue={0}
               maximumValue={1}
               step={0.01}
@@ -94,8 +95,14 @@ export default function HelperSlider({ onChange, steps = 3}: Props) {
             />
           </View>
           <View style={styles.labelRow}>
-            <Text style={styles.labelText}>⬇️ Close</Text>
-            <Text style={styles.labelText}>Distant ⬆️</Text>
+            <View style={{ flexDirection: "row", gap: 3 }}>
+              <Down />
+              <Text style={styles.labelText}>Close</Text>
+            </View>
+            <View style={{ flexDirection: "row", gap: 3 }}>
+              <Text style={styles.labelText}>Distant </Text>
+              <Up />
+            </View>
           </View>
         </View>
 
@@ -125,8 +132,14 @@ export default function HelperSlider({ onChange, steps = 3}: Props) {
             />
           </View>
           <View style={styles.labelRow}>
-            <Text style={styles.labelText}>⬇️ Low</Text>
-            <Text style={styles.labelText}>High ⬆️</Text>
+            <View style={{ flexDirection: "row", gap: 3 }}>
+              <Down />
+              <Text style={styles.labelText}> Low</Text>
+            </View>
+            <View style={{ flexDirection: "row", gap: 3 }}>
+              <Text style={styles.labelText}>High </Text>
+              <Up />
+            </View>
           </View>
         </View>
       </View>
