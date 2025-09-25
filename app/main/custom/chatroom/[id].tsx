@@ -681,7 +681,7 @@ const styles = StyleSheet.create({
     borderBottomColor: "#e5e7eb",
     ...Platform.select({
       ios: {
-        paddingTop: 50, // iOS 상태바 고려
+        paddingTop: 50,
       },
       android: {
         paddingTop: 20,
@@ -717,7 +717,6 @@ const styles = StyleSheet.create({
   },
   messagesContent: {
     paddingVertical: 16,
-    paddingBottom: 100, // 입력창과의 간격
   },
   voiceErrorContainer: {
     position: "absolute",
@@ -745,7 +744,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap:40,
+    gap: 40,
     width: "100%",
   },
   sideButton: {
@@ -769,7 +768,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     width: "100%",
     backgroundColor: "#ffffff",
-    borderRadius:9999,
+    borderRadius: 9999,
     borderWidth: 1,
     borderColor: "#93c5fd", // blue-300
     paddingHorizontal: 8,

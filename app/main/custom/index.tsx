@@ -107,9 +107,10 @@ export default function PersonaAndRoom() {
     try {
       setLoading(true);
       const safeName = name.trim() === "" ? "Noonchi" : name;
-      const safeProfileImage =
-        profileImageUrl || "https://noonchi.ai.kr/default-avatar.png";
-
+      if (!profileImageUrl) {
+        Alert.alert("Select Ai profile image");
+        return;
+      }
       // 1. Persona 생성
       const personaRes = await fetch("https://noonchi.ai.kr/api/personas", {
         method: "POST",
@@ -123,7 +124,7 @@ export default function PersonaAndRoom() {
           age: 20,
           relationship,
           description,
-          profileImageUrl: safeProfileImage,
+          profileImageUrl,
         }),
       });
       const persona = await personaRes.json();

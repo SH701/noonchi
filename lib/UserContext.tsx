@@ -13,7 +13,17 @@ import { ImageSourcePropType } from "react-native";
 export type Level = "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
 export type Interest = string;
 
+interface User {
+  id: number;
+  email: string;
+  nickname: string;
+  koreanLevel: Level;
+  profileImageUrl: string;
+  interests: Interest[];
+}
+
 interface UserContextType {
+  user: User | null;
   koreanLevel: Level;
   selectedFace: number | null;
   profileImageUrl: string | ImageSourcePropType | null;
@@ -31,6 +41,7 @@ interface UserContextType {
 const UserContext = createContext<UserContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
   const [koreanLevel, setKoreanLevel] = useState<Level>("BEGINNER");
   const [selectedFace, setSelectedFace] = useState<number | null>(null);
   const [profileImageUrl, setProfileImageUrl] = useState<
@@ -40,16 +51,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [accessToken, _setAccessToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // 앱 시작 시 토큰 불러오기
+  // 앱 시작 시 토큰 불러오기 + 유저 정보 요청
   useEffect(() => {
     (async () => {
       try {
         const saved = await AsyncStorage.getItem("accessToken");
+
         if (saved) {
           _setAccessToken(saved);
+
+          try {
+            const res = await fetch("https://noonchi.ai.kr/api/users/me", {
+              headers: { Authorization: `Bearer ${saved}` },
+            });
+
+            if (res.ok) {
+              const data = await res.json();
+
+              setUser(data);
+            } else {
+              if (res.status === 401) {
+                console.log("Token expired, removing...");
+                _setAccessToken(null);
+                await AsyncStorage.removeItem("accessToken");
+                setUser(null);
+              } else {
+              }
+            }
+          } catch (fetchError) {
+            // 네트워크 오류 시에는 토큰을 유지
+          }
         }
       } catch (err) {
-        console.error("Failed to load token:", err);
       } finally {
         setIsLoading(false);
       }
@@ -65,18 +98,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         await AsyncStorage.removeItem("accessToken");
         _setAccessToken(null);
+        setUser(null);
       }
     } catch (err) {
       console.error("Failed to save token:", err);
     }
   };
 
-  // 로그아웃 함수
+  // 로그아웃
   const logout = async () => {
     try {
       await AsyncStorage.multiRemove(["accessToken"]);
       _setAccessToken(null);
-      // 다른 사용자 데이터도 초기화
+      setUser(null);
       setKoreanLevel("BEGINNER");
       setSelectedFace(null);
       setProfileImageUrl(null);
@@ -89,6 +123,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return (
     <UserContext.Provider
       value={{
+        user,
         koreanLevel,
         setKoreanLevel,
         selectedFace,

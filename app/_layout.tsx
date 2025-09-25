@@ -1,8 +1,9 @@
 import { useFonts } from "expo-font";
-import { Stack, useRouter } from "expo-router";
+import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
+import { ActivityIndicator, View } from "react-native";
 import "react-native-reanimated";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AuthProvider, useAuth } from "../lib/UserContext";
@@ -10,26 +11,35 @@ import { AuthProvider, useAuth } from "../lib/UserContext";
 SplashScreen.preventAutoHideAsync();
 
 function AppStack() {
-  const { accessToken, isLoading } = useAuth();
-  const router = useRouter();
+  const { accessToken, user, isLoading } = useAuth();
 
-  useEffect(() => {
-    if (!isLoading) {
-      if (accessToken) {
-        router.replace("/main");
-      } else {
-        router.replace("/");
-      }
-    }
-  }, [isLoading, accessToken]);
+  if (isLoading && accessToken && user) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" color="#3b82f6" />
+      </View>
+    );
+  }
 
-  if (isLoading) return null;
+  const isAuthenticated = accessToken && user;
 
+  // 인증 상태에 따라 다른 스택 구조 렌더링
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="index" options={{ title: "Onboard" }} />
+      {isAuthenticated ? (
+        // 인증된 사용자: main을 첫 번째로
+        <>
+          <Stack.Screen name="main" />
+          <Stack.Screen name="index" options={{ title: "Onboard" }} />
+        </>
+      ) : (
+        // 미인증 사용자: index를 첫 번째로
+        <>
+          <Stack.Screen name="index" options={{ title: "Onboard" }} />
+          <Stack.Screen name="main" />
+        </>
+      )}
       <Stack.Screen name="(auth)" />
-      <Stack.Screen name="main" />
       <Stack.Screen name="after" />
     </Stack>
   );
