@@ -1,5 +1,6 @@
 import Modal from "@/components/persona/modal";
 import { useAuth } from "@/lib/UserContext";
+import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   Alert,
@@ -9,6 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import ChatLoading from "../etc/ChatLoading";
 
 type PersonaDetail = {
   id: number | string;
@@ -38,44 +40,53 @@ export default function PersonaDetailModal({
   const [data, setData] = useState<PersonaDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const router = useRouter();
 
-  // 삭제 핸들러
-  const handleDelete = async () => {
-    if (!personaId || !accessToken) return;
-
-    Alert.alert("Delete AI", "Delete This AI?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: async () => {
-          setDeleting(true);
-          try {
-            const res = await fetch(
-              `https://noonchi.ai.kr/api/personas/${personaId}`,
-              {
-                method: "DELETE",
-                headers: { Authorization: `Bearer ${accessToken}` },
-                cache: "no-store",
-              }
-            );
-            if (!res.ok) {
-              return;
+const handleDelete = async () => {
+  if (!personaId || !accessToken) return;
+  Alert.alert("Delete AI", "Delete This AI?", [
+    { text: "Cancel", style: "cancel" },
+    {
+      text: "Delete",
+      style: "destructive",
+      onPress: async () => {
+        setDeleting(true);
+        try {
+          const res = await fetch(
+            `https://noonchi.ai.kr/api/personas/${personaId}`,
+            {
+              method: "DELETE",
+              headers: { Authorization: `Bearer ${accessToken}` },
+              cache: "no-store",
             }
-            onDeleted?.(personaId);
-            onClose();
-          } catch (e) {
-            onDeleted?.(personaId);
-            onClose?.();
-          } finally {
-            setDeleting(false);
+          );
+          if (!res.ok) {
+            Alert.alert("Error", "Failed to delete AI.");
+            return;
           }
-        },
-      },
-    ]);
-  };
+          onDeleted?.(personaId);
 
-  // 상세 조회 API: GET /api/personas/{personaId}
+          Alert.alert("Success", "AI deleted successfully!", [
+            {
+              text: "OK",
+              onPress: () => {
+                onClose?.();
+              },
+            },
+          ]);
+        } catch (e) {
+          Alert.alert("Error", "Unexpected error occurred.");
+          onDeleted?.(personaId);
+          onClose?.();
+        } finally {
+          setDeleting(false);
+        }
+      },
+    },
+  ]);
+};
+
+
   useEffect(() => {
     if (!open || !personaId || !accessToken) return;
     const run = async () => {
@@ -107,7 +118,6 @@ export default function PersonaDetailModal({
     run();
   }, [open, personaId, accessToken]);
 
-  // 새로운 채팅
   const handleStartChat = async () => {
     if (!accessToken || !data) return;
     try {
@@ -119,20 +129,28 @@ export default function PersonaDetailModal({
         },
         body: JSON.stringify({
           personaId: data.id,
-          situation: data.description, // sitdata에서 상황을 전달
+          situation: data.description,
         }),
       });
 
-      if (!res.ok) throw new Error("Failed to create conversation");
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(
+          `Failed to create conversation: ${res.status} ${errText}`
+        );
+      }
       const json = await res.json();
-
       const conversationId =
         json.conversationId ?? json.id ?? json.conversation?.id;
 
       if (!conversationId) throw new Error("No conversationId in response");
+
+      onClose?.();
+
+      router.push(`/main/custom/chatroom/${conversationId}`);
     } catch (err) {
       console.error("StartChat error:", err);
-    }
+    } 
   };
 
   return (

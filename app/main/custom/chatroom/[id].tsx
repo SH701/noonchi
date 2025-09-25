@@ -313,7 +313,6 @@ export default function Chatroom() {
       setLoadingModalOpen(false);
       router.push(`/main/custom/chatroom/${id}/result`);
     } catch (e) {
-      console.error("대화 종료 오류:", e);
       setLoadingModalOpen(false);
       Alert.alert("오류", "대화 종료 중 오류가 발생했습니다.");
     }
@@ -593,7 +592,11 @@ export default function Chatroom() {
               placeholderTextColor="#9CA3AF"
               value={message}
               onChangeText={setMessage}
-              onSubmitEditing={() => sendMessage(message)}
+              onSubmitEditing={() => {
+                const current = message;
+                sendMessage(current);
+                setMessage(""); 
+              }}
               editable={!loading}
             />
 

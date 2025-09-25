@@ -48,6 +48,9 @@ export default function ChatHistory() {
     number | string | null
   >(null);
   const [openChatId, setOpenChatId] = useState<number | string | null>(null);
+  const [reloadPersonas, setReloadPersonas] = useState<() => void>(
+    () => () => {}
+  );
 
   const filterMap: Record<Filter, string> = {
     done: "ENDED",
@@ -134,6 +137,7 @@ export default function ChatHistory() {
             setSelectedPersonaId(it.personaId);
             setOpenDetail(true);
           }}
+          onLoad={(reload) => setReloadPersonas(() => reload)}
         />
       </View>
 
@@ -150,6 +154,7 @@ export default function ChatHistory() {
             (prev ?? []).filter((p) => p.personas?.personaId !== deletedId)
           );
           setOpenDetail(false);
+          reloadPersonas();
         }}
       />
       <View style={styles.filterBar}>
@@ -348,9 +353,7 @@ export default function ChatHistory() {
                   </View>
                 )}
                 {isOpen && chat.status === "ENDED" && (
-                  <View style={styles.actions}>
-                    <FeedbackSection id={chat.conversationId} />
-                  </View>
+                  <FeedbackSection id={chat.conversationId} />
                 )}
               </View>
             );

@@ -14,7 +14,7 @@ import {
   View,
 } from "react-native";
 
-type Role = "BOSS" | "GF_PARENTS" | "CLERK";
+type Role = "BOSS" | "Girlfriend's PARENTS" | "CLERK";
 type SituationValue = string;
 const avatarPresets = [
   require("../../../assets/avatars/avatar1.png"),
@@ -33,7 +33,7 @@ const situationOptions = {
     { value: "BOSS2", label: "Requesting half-day or annual leave" },
     { value: "BOSS3", label: "Requesting feedback on work" },
   ],
-  GF_PARENTS: [
+  "Girlfriend's PARENTS": [
     { value: "GF_PARENTS1", label: "Meeting for the first time" },
     { value: "GF_PARENTS2", label: "Conversation over dinner" },
     { value: "GF_PARENTS3", label: "Apologizing for breaking a picture frame" },
@@ -58,7 +58,6 @@ export default function PersonaAndRoom() {
   const [showAvatarModal, setShowAvatarModal] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // 역할 변경되면 첫 상황 선택
   useEffect(() => {
     setDescription(situationOptions[relationship][0].value);
   }, [relationship]);
@@ -107,10 +106,11 @@ export default function PersonaAndRoom() {
     try {
       setLoading(true);
       const safeName = name.trim() === "" ? "Noonchi" : name;
-      if (!profileImageUrl) {
-        Alert.alert("Select Ai profile image");
-        return;
-      }
+      const safeImage =
+        profileImageUrl ||
+        Image.resolveAssetSource(
+          require("../../../assets/characters/character2.png")
+        ).uri;
       // 1. Persona 생성
       const personaRes = await fetch("https://noonchi.ai.kr/api/personas", {
         method: "POST",
@@ -124,7 +124,7 @@ export default function PersonaAndRoom() {
           age: 20,
           relationship,
           description,
-          profileImageUrl,
+          profileImageUrl: safeImage,
         }),
       });
       const persona = await personaRes.json();
@@ -156,10 +156,7 @@ export default function PersonaAndRoom() {
   return (
     <ScrollView contentContainerStyle={styles.container} scrollEnabled={false}>
       <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => router.push("/main")}
-          style={styles.backBtn}
-        >
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Text style={{ fontSize: 18 }}>{"←"}</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Honorific Helper</Text>
@@ -255,7 +252,7 @@ export default function PersonaAndRoom() {
 
       <Text style={styles.des}>AI`s role</Text>
       <View>
-        {(["BOSS", "Girlfriend`s PARENTS", "CLERK"] as Role[]).map((role) => (
+        {(["BOSS", "Girlfriend's PARENTS", "CLERK"] as Role[]).map((role) => (
           <TouchableOpacity
             key={role}
             onPress={() => setRelationship(role)}

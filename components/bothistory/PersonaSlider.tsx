@@ -22,6 +22,7 @@ export type PersonaSlide =
 type Props = {
   onAdd?: () => void;
   onItemClick?: (idx: number, it: PersonaSlide) => void;
+  onLoad?: (reload: () => void) => void;
   itemSize?: number;
   gap?: number;
   visibleCount?: number;
@@ -31,6 +32,7 @@ type Props = {
 export default function PersonaSlider({
   onAdd,
   onItemClick,
+  onLoad,
   itemSize = 56,
   gap = 12,
   visibleCount = 5,
@@ -39,32 +41,33 @@ export default function PersonaSlider({
   const { accessToken } = useAuth();
   const [items, setItems] = useState<PersonaSlide[]>([]);
   const { width: SCREEN_WIDTH } = Dimensions.get("window");
-  // ✅ API 호출
-  useEffect(() => {
+
+  const fetchPersonas = async () => {
     if (!accessToken) return;
+    try {
+      const API_BASE = "https://noonchi.ai.kr";
+      const res = await fetch(`${API_BASE}/api/personas/my?page=1&size=10`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      const data = await res.json();
+      const personas = Array.isArray(data) ? data : data?.content || [];
 
-    const fetchPersonas = async () => {
-      try {
-        const API_BASE = "https://noonchi.ai.kr";
-        const res = await fetch(`${API_BASE}/api/personas/my?page=1&size=10`, {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        });
-        const data = await res.json();
-        const personas = Array.isArray(data) ? data : data?.content || [];
+      const mapped: PersonaSlide[] = personas.map((p: any) => ({
+        personaId: p.personaId || p.id,
+        name: p.name,
+        profileImageUrl: p.profileImageUrl || p.imageUrl,
+      }));
 
-        const mapped: PersonaSlide[] = personas.map((p: any) => ({
-          personaId: p.personaId || p.id,
-          name: p.name,
-          profileImageUrl: p.profileImageUrl || p.imageUrl,
-        }));
+      setItems([{ isAdd: true }, ...mapped]);
+    } catch (err) {
+      console.error("Persona fetch error", err);
+    }
+  };
 
-        setItems([{ isAdd: true }, ...mapped]);
-      } catch (err) {
-        console.error("Persona fetch error", err);
-      }
-    };
-
+  // 2. effect 안에서 호출
+  useEffect(() => {
     fetchPersonas();
+    onLoad?.(fetchPersonas);
   }, [accessToken]);
 
   const viewW = viewportWidth ?? SCREEN_WIDTH;
