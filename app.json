@@ -11,8 +11,11 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "NSMicrophoneUsageDescription": "Audio permission."
-      }
+        "NSMicrophoneUsageDescription": "Audio permission.",
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "bundleIdentifier": "kr.ai.noonchi.app",
+      "buildNumber": "1"
     },
     "android": {
       "permissions": ["RECORD_AUDIO"],
@@ -20,7 +23,9 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.suhawn.noonchiapp",
+      "versionCode": 1
     },
     "web": {
       "bundler": "metro",
@@ -41,6 +46,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "aae631de-4226-436f-b4ad-fc51675b4afd"
+      }
     }
   }
 }
